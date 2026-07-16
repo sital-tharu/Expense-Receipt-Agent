@@ -7,7 +7,8 @@
     "build": "node node_modules/next/dist/bin/next build",
     "start": "node node_modules/next/dist/bin/next start",
     "lint": "node node_modules/eslint/bin/eslint.js",
-    "test:extract": "node node_modules/tsx/dist/cli.mjs scripts/test-extract.ts"
+    "test:extract": "node node_modules/tsx/dist/cli.mjs scripts/test-extract.ts",
+    "seed": "node node_modules/tsx/dist/cli.mjs scripts/seed.ts"
   },
   "dependencies": {
     "@google/genai": "^2.12.0",
