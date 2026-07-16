@@ -4,8 +4,15 @@
  * Pure functions only — no Firestore or Gemini credentials needed.
  */
 import assert from "node:assert";
-import { detectSubscriptions } from "../src/lib/subscriptions";
-import { isoDate, weekStats } from "../src/lib/stats";
+import { detectSubscriptions, monthlyTotal } from "../src/lib/subscriptions";
+import {
+  addDays,
+  categoryAnomaly,
+  isoDate,
+  mondayOf,
+  resolveWeekAnchor,
+  weekStats,
+} from "../src/lib/stats";
 import type { StoredReceipt } from "../src/lib/types";
 
 function daysAgo(n: number): string {
@@ -61,5 +68,71 @@ const s = weekStats(receipts);
 assert.strictEqual(s.total, 150);
 assert.strictEqual(s.count, 2);
 assert.deepStrictEqual(s.byCategory, [{ category: "Food", total: 150 }]);
+
+// 8. resolveWeekAnchor: invalid, mid-week, and future params
+const currentMonday = isoDate(mondayOf(new Date()));
+assert.strictEqual(isoDate(resolveWeekAnchor(undefined)), currentMonday);
+assert.strictEqual(isoDate(resolveWeekAnchor("garbage")), currentMonday);
+assert.strictEqual(
+  isoDate(resolveWeekAnchor("2099-01-01")),
+  currentMonday,
+  "future week clamped to current",
+);
+const prevMonday = addDays(mondayOf(new Date()), -7);
+const prevWednesday = addDays(prevMonday, 2);
+assert.strictEqual(
+  isoDate(resolveWeekAnchor(isoDate(prevWednesday))),
+  isoDate(prevMonday),
+  "mid-week param snaps to its Monday",
+);
+
+// 9. categoryAnomaly: 40% Food spike over a ₹500/week average
+const anchor = mondayOf(new Date());
+const anomalyReceipts: StoredReceipt[] = [
+  r("Cafe", isoDate(addDays(anchor, 1)), 700, "Food"), // this week
+  r("Cafe", isoDate(addDays(anchor, -6)), 500, "Food"), // wk -1
+  r("Cafe", isoDate(addDays(anchor, -13)), 500, "Food"), // wk -2
+  r("Cafe", isoDate(addDays(anchor, -20)), 500, "Food"), // wk -3
+  r("Cafe", isoDate(addDays(anchor, -27)), 500, "Food"), // wk -4
+];
+const spike = categoryAnomaly(anomalyReceipts, anchor);
+assert.ok(spike, "spike detected");
+assert.strictEqual(spike.category, "Food");
+assert.strictEqual(spike.pctAbove, 40);
+
+// 10. below the 1.3× threshold → no anomaly
+assert.strictEqual(
+  categoryAnomaly(
+    [
+      r("Cafe", isoDate(addDays(anchor, 1)), 550, "Food"),
+      ...anomalyReceipts.slice(1),
+    ],
+    anchor,
+  ),
+  null,
+  "10% above average is not an anomaly",
+);
+
+// 11. tiny baseline (avg < ₹200) never flags, even at a huge ratio
+assert.strictEqual(
+  categoryAnomaly(
+    [
+      r("Chai", isoDate(addDays(anchor, 1)), 400, "Food"),
+      r("Chai", isoDate(addDays(anchor, -6)), 100, "Food"),
+    ],
+    anchor,
+  ),
+  null,
+  "small baselines are ignored",
+);
+
+// 12. subscriptions monthly total
+assert.strictEqual(
+  monthlyTotal([
+    { merchant: "A", monthlyAmount: 649, occurrences: 3, lastDate: "2026-07-10" },
+    { merchant: "B", monthlyAmount: 119, occurrences: 3, lastDate: "2026-07-05" },
+  ]),
+  768,
+);
 
 console.log("All subscription-detection and stats checks passed ✓");

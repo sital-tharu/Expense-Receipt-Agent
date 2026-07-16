@@ -62,3 +62,8 @@ export function detectSubscriptions(
 
   return flags.sort((a, b) => b.monthlyAmount - a.monthlyAmount);
 }
+
+/** Combined monthly cost of all detected subscriptions. */
+export function monthlyTotal(flags: SubscriptionFlag[]): number {
+  return flags.reduce((sum, f) => sum + f.monthlyAmount, 0);
+}
