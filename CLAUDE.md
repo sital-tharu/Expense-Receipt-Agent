@@ -19,7 +19,10 @@ Optimize for a strong, clear demo over production robustness.
 ## Architecture
 
 - **Next.js 16 App Router + TypeScript + Tailwind v4**, `src/` dir, `@/*` alias.
-- **Extraction**: Gemini multimodal via `@google/genai` (`src/lib/gemini.ts` holds the client + `MODEL` constant; `src/lib/extract.ts` does image → structured JSON via `responseSchema`, validated with zod).
+- **Extraction**: Gemini multimodal via `@google/genai` (`src/lib/gemini.ts` holds the client + `GEMINI_MODEL` constant; `src/lib/extract.ts` does image → structured JSON via `responseJsonSchema`, validated with zod).
+  Model is pinned to `gemini-3.1-flash-lite` (~2s/receipt, accurate): `gemini-2.5-flash`
+  404s for new API keys and `gemini-3.5-flash` times out (headers never arrive) on the
+  free tier as of Jul 2026. If extraction hangs or 404s, probe model latency first.
 - **Storage**: Firestore via `firebase-admin`, **server-side only** (no client SDK, no security rules). Init + queries in `src/lib/firestore.ts`. Receipts live in the `receipts` collection.
 - **Schema** (`src/lib/types.ts`): `merchant`, `date` (YYYY-MM-DD), `total` (number, INR), `lineItems: {name, price}[]` (often **empty** — see below), `category` (one of `Food, Transport, Subscriptions, Shopping, Utilities, Other`), plus `source: 'photo' | 'email'` and `createdAt` on stored docs.
 - **Dashboard**: server components fetch from Firestore; charts use Recharts.
