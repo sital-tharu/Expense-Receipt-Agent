@@ -85,14 +85,21 @@ export default function UploadPage() {
 
       {status === "done" && receipt && (
         <div className="mt-6 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-          <h2 className="font-medium">Saved ✓</h2>
+          <h2 className="font-medium">
+            Saved ✓
+            {receipt.confidence === "low" && (
+              <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-normal text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                Needs review — check the fields below
+              </span>
+            )}
+          </h2>
           <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
             <dt className="text-gray-500">Merchant</dt>
             <dd>{receipt.merchant}</dd>
             <dt className="text-gray-500">Date</dt>
             <dd>{receipt.date}</dd>
             <dt className="text-gray-500">Total</dt>
-            <dd>₹{receipt.total.toLocaleString("en-IN")}</dd>
+            <dd className="font-mono">₹{receipt.total.toLocaleString("en-IN")}</dd>
             <dt className="text-gray-500">Category</dt>
             <dd>{receipt.category}</dd>
           </dl>
@@ -102,7 +109,7 @@ export default function UploadPage() {
                 {receipt.lineItems.map((item, i) => (
                   <tr key={i} className="border-t border-gray-100 dark:border-gray-800">
                     <td className="py-1">{item.name}</td>
-                    <td className="py-1 text-right">
+                    <td className="py-1 text-right font-mono">
                       ₹{item.price.toLocaleString("en-IN")}
                     </td>
                   </tr>
@@ -110,6 +117,14 @@ export default function UploadPage() {
               </tbody>
             </table>
           )}
+          <details className="mt-3">
+            <summary className="cursor-pointer text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+              View raw extraction
+            </summary>
+            <pre className="mt-2 overflow-x-auto rounded-md bg-gray-50 p-3 font-mono text-xs leading-relaxed dark:bg-gray-900">
+              {JSON.stringify(receipt, null, 2)}
+            </pre>
+          </details>
         </div>
       )}
     </main>
