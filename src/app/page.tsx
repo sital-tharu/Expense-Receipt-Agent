@@ -1,65 +1,125 @@
-import Image from "next/image";
+import Link from "next/link";
+import CategoryChart from "@/components/CategoryChart";
+import { getReceipts } from "@/lib/firestore";
+import { formatInr, weekStats } from "@/lib/stats";
+import type { StoredReceipt } from "@/lib/types";
 
-export default function Home() {
+// Firestore data changes between requests — never prerender this page
+export const dynamic = "force-dynamic";
+
+export default async function DashboardPage() {
+  let receipts: StoredReceipt[] = [];
+  let loadError: string | null = null;
+  try {
+    receipts = await getReceipts();
+  } catch (err) {
+    loadError = err instanceof Error ? err.message : "Failed to load receipts";
+  }
+
+  const stats = weekStats(receipts);
+  const deltaPct =
+    stats.prevTotal > 0
+      ? ((stats.total - stats.prevTotal) / stats.prevTotal) * 100
+      : null;
+  const recent = [...receipts]
+    .sort((a, b) => (a.date < b.date ? 1 : -1))
+    .slice(0, 10);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="mx-auto w-full max-w-3xl px-6 py-10">
+      <div className="flex items-baseline justify-between">
+        <h1 className="text-2xl font-semibold">This week</h1>
+        <p className="text-sm text-gray-500">
+          {stats.weekStart} → {stats.weekEnd}
+        </p>
+      </div>
+
+      {loadError && (
+        <div className="mt-6 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200">
+          <p className="font-medium">Firestore isn&apos;t reachable yet</p>
+          <p className="mt-1">
+            Add <code>GEMINI_API_KEY</code> and{" "}
+            <code>FIREBASE_SERVICE_ACCOUNT_PATH</code> to <code>.env.local</code>{" "}
+            (see README setup). Error: {loadError}
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      )}
+
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="rounded-xl border border-gray-200 p-5 dark:border-gray-800 sm:col-span-2">
+          <p className="text-sm text-gray-500">Total spend</p>
+          <p className="mt-1 text-5xl font-semibold tracking-tight">
+            {formatInr(stats.total)}
+          </p>
+          {deltaPct !== null && (
+            <p className="mt-2 text-sm text-gray-500">
+              {deltaPct >= 0 ? "▲" : "▼"} {Math.abs(deltaPct).toFixed(0)}% vs
+              last week ({formatInr(stats.prevTotal)})
+            </p>
+          )}
         </div>
-      </main>
-    </div>
+        <div className="rounded-xl border border-gray-200 p-5 dark:border-gray-800">
+          <p className="text-sm text-gray-500">Receipts</p>
+          <p className="mt-1 text-5xl font-semibold tracking-tight">
+            {stats.count}
+          </p>
+          <p className="mt-2 text-sm text-gray-500">this week</p>
+        </div>
+      </div>
+
+      <section className="mt-8">
+        <h2 className="text-sm font-medium text-gray-500">Spend by category</h2>
+        <div className="mt-3 rounded-xl border border-gray-200 p-4 dark:border-gray-800">
+          <CategoryChart data={stats.byCategory} />
+        </div>
+      </section>
+
+      <section className="mt-8">
+        <div className="flex items-baseline justify-between">
+          <h2 className="text-sm font-medium text-gray-500">Recent receipts</h2>
+          <Link
+            href="/upload"
+            className="text-sm font-medium text-emerald-600 hover:text-emerald-500"
+          >
+            + Add receipt
+          </Link>
+        </div>
+        {recent.length === 0 ? (
+          <p className="mt-4 text-sm text-gray-500">
+            No receipts yet —{" "}
+            <Link href="/upload" className="text-emerald-600 underline">
+              upload your first one
+            </Link>
+            .
+          </p>
+        ) : (
+          <table className="mt-3 w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-200 text-left text-gray-500 dark:border-gray-800">
+                <th className="py-2 font-medium">Merchant</th>
+                <th className="py-2 font-medium">Date</th>
+                <th className="py-2 font-medium">Category</th>
+                <th className="py-2 text-right font-medium">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recent.map((r) => (
+                <tr
+                  key={r.id}
+                  className="border-b border-gray-100 dark:border-gray-900"
+                >
+                  <td className="py-2">{r.merchant}</td>
+                  <td className="py-2 text-gray-500">{r.date}</td>
+                  <td className="py-2 text-gray-500">{r.category}</td>
+                  <td className="py-2 text-right tabular-nums">
+                    {formatInr(r.total)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+    </main>
   );
 }
