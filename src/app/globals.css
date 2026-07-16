@@ -12,10 +12,24 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Chart tokens (dataviz reference palette; single-hue magnitude charts) */
+:root {
+  --viz-series-1: #2a78d6;
+  --viz-ink-secondary: #52514e;
+  --viz-ink-muted: #898781;
+  --viz-grid: #e1e0d9;
+  --viz-surface: #fcfcfb;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --viz-series-1: #3987e5;
+    --viz-ink-secondary: #c3c2b7;
+    --viz-ink-muted: #898781;
+    --viz-grid: #2c2c2a;
+    --viz-surface: #1a1a19;
   }
 }
 
