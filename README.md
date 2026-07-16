@@ -59,19 +59,21 @@ recurring subscriptions before they quietly drain your account.
    npm run dev          # app at http://localhost:3000
    ```
 
-   Test extraction from the command line with any receipt image:
+## Useful scripts
 
-   ```bash
-   npm run test:extract -- samples/my-receipt.png
-   ```
+| Command | What it does |
+|---|---|
+| `npm run test:extract -- samples/<image>` | Extract a receipt image from the CLI and save it to Firestore (`--dry-run` to skip the write) |
+| `npm run seed` | Seed mock receipt history for the demo (`-- --wipe` clears previously seeded docs first) |
+| `npm run test:logic` | Regression checks for subscription detection & weekly stats (no credentials needed) |
 
 ## Project status
 
 - [x] Project scaffold (Next.js + Firestore + Gemini wiring)
-- [ ] Extraction pipeline (image → structured JSON → Firestore)
-- [ ] Photo upload flow
-- [ ] Weekly dashboard (totals, category chart, recent receipts)
-- [ ] Subscription detection
+- [x] Extraction pipeline (image → structured JSON → Firestore)
+- [x] Photo upload flow
+- [x] Weekly dashboard (totals, category chart, recent receipts)
+- [x] Subscription detection (rule-based: ~monthly cadence, ±10% amount)
 - [ ] Gmail intake
 
 ---
