@@ -12,24 +12,31 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* Chart tokens (dataviz reference palette; single-hue magnitude charts) */
+/*
+ * Category colors (validated dataviz reference palette, fixed assignment —
+ * same hue links a category's chart bar and its table badge).
+ * Light-mode magenta/aqua/yellow sit below 3:1 contrast: every colored mark
+ * must keep its visible text label (relief rule).
+ */
 :root {
-  --viz-series-1: #2a78d6;
-  --viz-ink-secondary: #52514e;
-  --viz-ink-muted: #898781;
-  --viz-grid: #e1e0d9;
-  --viz-surface: #fcfcfb;
+  --cat-food: #eb6834;
+  --cat-transport: #2a78d6;
+  --cat-subscriptions: #e87ba4;
+  --cat-shopping: #4a3aa7;
+  --cat-utilities: #1baf7a;
+  --cat-other: #eda100;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
-    --viz-series-1: #3987e5;
-    --viz-ink-secondary: #c3c2b7;
-    --viz-ink-muted: #898781;
-    --viz-grid: #2c2c2a;
-    --viz-surface: #1a1a19;
+    --cat-food: #d95926;
+    --cat-transport: #3987e5;
+    --cat-subscriptions: #d55181;
+    --cat-shopping: #9085e9;
+    --cat-utilities: #199e70;
+    --cat-other: #c98500;
   }
 }
 
