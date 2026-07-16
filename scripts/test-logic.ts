@@ -23,7 +23,7 @@ function daysAgo(n: number): string {
 
 let id = 0;
 function r(merchant: string, date: string, total: number, category: StoredReceipt["category"] = "Subscriptions"): StoredReceipt {
-  return { id: String(++id), merchant, date, total, lineItems: [], category, source: "photo", createdAt: new Date().toISOString() };
+  return { id: String(++id), merchant, date, total, lineItems: [], category, confidence: "high", source: "photo", createdAt: new Date().toISOString() };
 }
 
 // 1. Three monthly Netflix charges → flagged with 3 occurrences

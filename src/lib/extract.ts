@@ -36,8 +36,14 @@ const RESPONSE_JSON_SCHEMA = {
       enum: [...CATEGORIES],
       description: "Single best-fit spending category.",
     },
+    confidence: {
+      type: "string",
+      enum: ["high", "low"],
+      description:
+        "Self-assessment: 'low' if the image is blurry, cropped, or any extracted field is uncertain; otherwise 'high'.",
+    },
   },
-  required: ["merchant", "date", "total", "lineItems", "category"],
+  required: ["merchant", "date", "total", "lineItems", "category", "confidence"],
 };
 
 function buildPrompt(): string {
@@ -59,7 +65,9 @@ Rules:
 - category: pick the single best fit. Streaming/software/memberships →
   Subscriptions; groceries/restaurants/food delivery → Food; fuel/cab/metro/
   train → Transport; electricity/water/gas/mobile recharge → Utilities;
-  retail/online shopping → Shopping; anything else → Other.`;
+  retail/online shopping → Shopping; anything else → Other.
+- confidence: "low" if the image is blurry, partially cropped, hard to read,
+  or you are not certain about the merchant, date, or total; otherwise "high".`;
 }
 
 export async function extractReceipt(

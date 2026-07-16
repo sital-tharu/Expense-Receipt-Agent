@@ -23,6 +23,9 @@ export const ReceiptSchema = z.object({
   // Empty for payment-app screenshots (GPay/UPI) that show no itemized lines
   lineItems: z.array(LineItemSchema),
   category: z.enum(CATEGORIES),
+  // Model self-assessment; "low" surfaces a "Needs review" badge in the UI.
+  // Defaulted so receipts stored before this field existed still parse.
+  confidence: z.enum(["high", "low"]).default("high"),
 });
 
 export type Receipt = z.infer<typeof ReceiptSchema>;

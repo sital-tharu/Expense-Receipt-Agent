@@ -22,7 +22,8 @@ function daysAgo(n: number): string {
 
 const none: Receipt["lineItems"] = [];
 
-const SEED: Receipt[] = [
+// confidence is stamped "high" at write time — mock data is by definition clean
+const SEED: Omit<Receipt, "confidence">[] = [
   // --- Recurring subscriptions: 3 charges each, ~monthly cadence ---
   { merchant: "Netflix", date: daysAgo(6), total: 649, lineItems: none, category: "Subscriptions" },
   { merchant: "Netflix", date: daysAgo(36), total: 649, lineItems: none, category: "Subscriptions" },
@@ -71,7 +72,13 @@ async function main() {
   const batch = db.batch();
   const createdAt = new Date().toISOString();
   for (const receipt of SEED) {
-    batch.set(col.doc(), { ...receipt, source: "photo", seeded: true, createdAt });
+    batch.set(col.doc(), {
+      ...receipt,
+      confidence: "high",
+      source: "photo",
+      seeded: true,
+      createdAt,
+    });
   }
   await batch.commit();
   console.log(`Seeded ${SEED.length} mock receipts`);
