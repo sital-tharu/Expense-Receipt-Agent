@@ -8,7 +8,8 @@
     "start": "node node_modules/next/dist/bin/next start",
     "lint": "node node_modules/eslint/bin/eslint.js",
     "test:extract": "node node_modules/tsx/dist/cli.mjs scripts/test-extract.ts",
-    "seed": "node node_modules/tsx/dist/cli.mjs scripts/seed.ts"
+    "seed": "node node_modules/tsx/dist/cli.mjs scripts/seed.ts",
+    "test:logic": "node node_modules/tsx/dist/cli.mjs scripts/test-logic.ts"
   },
   "dependencies": {
     "@google/genai": "^2.12.0",
