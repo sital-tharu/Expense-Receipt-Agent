@@ -27,6 +27,11 @@ Optimize for a strong, clear demo over production robustness.
 
 ## Important context
 
+- **npm scripts must call JS entry points via `node node_modules/...` directly**
+  (e.g. `node node_modules/next/dist/bin/next dev`). The local project path
+  contains `&`, which breaks npm's Windows `.cmd` shims — never rely on
+  `node_modules/.bin` names in package.json scripts.
+
 - Test data is **Google Pay transaction screenshots**, not paper receipts:
   merchant = UPI payee name, line items usually absent, amounts in ₹.
   The extraction prompt is tuned for this — keep it working for both cases.
