@@ -2,6 +2,7 @@ import Link from "next/link";
 import CategoryChart from "@/components/CategoryChart";
 import { getReceipts } from "@/lib/firestore";
 import { formatInr, weekStats } from "@/lib/stats";
+import { detectSubscriptions } from "@/lib/subscriptions";
 import type { StoredReceipt } from "@/lib/types";
 
 // Firestore data changes between requests — never prerender this page
@@ -24,6 +25,7 @@ export default async function DashboardPage() {
   const recent = [...receipts]
     .sort((a, b) => (a.date < b.date ? 1 : -1))
     .slice(0, 10);
+  const subscriptions = detectSubscriptions(receipts);
 
   return (
     <main className="mx-auto w-full max-w-3xl px-6 py-10">
@@ -66,6 +68,35 @@ export default async function DashboardPage() {
           <p className="mt-2 text-sm text-gray-500">this week</p>
         </div>
       </div>
+
+      {subscriptions.length > 0 && (
+        <section className="mt-8">
+          <h2 className="text-sm font-medium text-gray-500">
+            Recurring subscriptions detected
+          </h2>
+          <ul className="mt-3 space-y-2">
+            {subscriptions.map((s) => (
+              <li
+                key={s.merchant}
+                className="flex items-baseline justify-between rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm dark:border-amber-800 dark:bg-amber-950"
+              >
+                <span>
+                  <span aria-hidden>🔁</span>{" "}
+                  <span className="font-medium">{s.merchant}</span>
+                  <span className="text-gray-600 dark:text-gray-300">
+                    {" "}
+                    — {formatInr(s.monthlyAmount)}/mo, {s.occurrences} months in
+                    a row
+                  </span>
+                </span>
+                <span className="text-gray-500 dark:text-gray-400">
+                  last charged {s.lastDate}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="mt-8">
         <h2 className="text-sm font-medium text-gray-500">Spend by category</h2>
