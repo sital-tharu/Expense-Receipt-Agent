@@ -41,7 +41,7 @@ Optimize for a strong, clear demo over production robustness.
   The extraction prompt is tuned for this — keep it working for both cases.
 - **Never commit**: `.env.local`, `secrets/` (Firebase service account JSON),
   `samples/` (personal financial screenshots). All are gitignored.
-- Currency is INR-only by design (confirmed decision — no currency field).
+- Currency: totals are stored in INR. Foreign-currency receipts keep `originalAmount`/`originalCurrency`; `total` is recomputed in code (`applyExchangeRate` in `src/lib/extract.ts`) from `EXCHANGE_RATE_<ISO>` env vars (`src/lib/rates.ts`, USD/EUR/GBP fallbacks). Rates apply at extraction time only — never retroactively.
 - GitHub remote: https://github.com/sital-tharu/Expense-Receipt-Agent.git — commit and push after each working milestone.
 
 ## Environment (.env.local)
