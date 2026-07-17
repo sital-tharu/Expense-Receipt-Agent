@@ -42,9 +42,33 @@ const RESPONSE_JSON_SCHEMA = {
       description:
         "Self-assessment: 'low' if the image is blurry, cropped, or any extracted field is uncertain; otherwise 'high'.",
     },
+    originalAmount: {
+      type: ["number", "null"],
+      description:
+        "Pre-conversion amount when the receipt is NOT in INR; null for INR receipts.",
+    },
+    originalCurrency: {
+      type: ["string", "null"],
+      description:
+        "ISO 4217 code of the original currency (e.g. USD, EUR); null for INR receipts.",
+    },
   },
-  required: ["merchant", "date", "total", "lineItems", "category", "confidence"],
+  required: [
+    "merchant",
+    "date",
+    "total",
+    "lineItems",
+    "category",
+    "confidence",
+    "originalAmount",
+    "originalCurrency",
+  ],
 };
+
+const CURRENCY_RULE = `If the amount is in a foreign currency (e.g. USD, EUR,
+GBP), convert total to INR using approximate rates (1 USD ≈ ₹88, 1 EUR ≈ ₹95,
+1 GBP ≈ ₹110) and set originalAmount + originalCurrency to the pre-conversion
+value and its ISO code. For INR amounts set both to null.`;
 
 function buildPrompt(): string {
   const today = new Date().toISOString().slice(0, 10);
@@ -59,7 +83,7 @@ Rules:
   handles, or transaction codes.
 - date: the transaction date as YYYY-MM-DD. If the year is missing, use the
   most recent past occurrence of that day relative to today.
-- total: the final amount paid in INR as a plain number.
+- total: the final amount paid in INR as a plain number. ${CURRENCY_RULE}
 - lineItems: itemized purchases with name and price. Return [] when none are
   visible.
 - category: pick the single best fit. Streaming/software/memberships →
@@ -116,7 +140,7 @@ Rules:
 - date: the transaction date as YYYY-MM-DD; if only the email's sent date is
   visible, use that.
 - total: the final amount paid in INR (order total after discounts, including
-  delivery fees and taxes) as a plain number.
+  delivery fees and taxes) as a plain number. ${CURRENCY_RULE}
 - lineItems: itemized purchases with name and price when listed; otherwise [].
 - category: pick the single best fit. Streaming/software/memberships →
   Subscriptions; groceries/restaurants/food delivery → Food; fuel/cab/metro/

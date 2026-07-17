@@ -21,7 +21,7 @@ import {
   resolveWeekAnchor,
   weekStats,
 } from "../src/lib/stats";
-import type { StoredReceipt } from "../src/lib/types";
+import { ReceiptSchema, type StoredReceipt } from "../src/lib/types";
 
 function daysAgo(n: number): string {
   const d = new Date();
@@ -247,5 +247,35 @@ assert.deepStrictEqual(findImageAttachments(multipart), [
 ]);
 assert.strictEqual(getHeader(multipart, "subject"), "Your Swiggy order");
 assert.strictEqual(getHeader(multipart, "From"), undefined);
+
+// 19. foreign-currency fields: optional, nullable, ISO-code enforced
+const base = {
+  merchant: "Anthropic, PBC",
+  date: "2026-07-14",
+  total: 1760,
+  lineItems: [],
+  category: "Subscriptions" as const,
+  confidence: "high" as const,
+};
+assert.strictEqual(
+  ReceiptSchema.parse({ ...base, originalAmount: 20, originalCurrency: "USD" })
+    .originalCurrency,
+  "USD",
+);
+assert.strictEqual(
+  ReceiptSchema.parse({ ...base, originalAmount: null, originalCurrency: null })
+    .originalAmount,
+  null,
+  "explicit nulls accepted (INR receipts)",
+);
+assert.strictEqual(
+  ReceiptSchema.parse(base).originalAmount,
+  undefined,
+  "absent fields accepted (docs stored before this feature)",
+);
+assert.throws(
+  () => ReceiptSchema.parse({ ...base, originalAmount: 20, originalCurrency: "DOLLARS" }),
+  "non-ISO currency code rejected",
+);
 
 console.log("All subscription-detection and stats checks passed ✓");

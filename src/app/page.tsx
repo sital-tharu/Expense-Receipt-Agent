@@ -360,6 +360,14 @@ export default async function DashboardPage({
                     </td>
                     <td className="px-3.5 py-2.5 text-right font-mono tabular-nums">
                       {formatInr(r.total)}
+                      {r.originalCurrency && r.originalAmount != null && (
+                        <div
+                          className="text-[11px] text-gray-500"
+                          title="Original amount — ₹ value is an approximate conversion"
+                        >
+                          {r.originalCurrency} {r.originalAmount}
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}

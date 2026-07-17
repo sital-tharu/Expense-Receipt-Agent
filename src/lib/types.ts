@@ -26,6 +26,10 @@ export const ReceiptSchema = z.object({
   // Model self-assessment; "low" surfaces a "Needs review" badge in the UI.
   // Defaulted so receipts stored before this field existed still parse.
   confidence: z.enum(["high", "low"]).default("high"),
+  // Non-INR receipts: `total` holds the approximate INR conversion and the
+  // pre-conversion value is preserved here. Both null/absent for INR receipts.
+  originalAmount: z.number().positive().nullish(),
+  originalCurrency: z.string().length(3).nullish(),
 });
 
 export type Receipt = z.infer<typeof ReceiptSchema>;
