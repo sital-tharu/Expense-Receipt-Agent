@@ -40,4 +40,5 @@ export interface StoredReceipt extends Receipt {
   seeded?: boolean; // mock demo data (npm run seed)
   emailSubject?: string; // provenance for source === "email"
   emailFrom?: string;
+  emailMessageId?: string; // Gmail message id → mail.google.com/mail/u/0/#all/<id>
 }

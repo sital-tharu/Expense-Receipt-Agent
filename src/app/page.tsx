@@ -346,6 +346,17 @@ export default async function DashboardPage({
                           view
                         </a>
                       )}
+                      {r.source === "email" && r.emailMessageId && (
+                        <a
+                          href={`https://mail.google.com/mail/u/0/#all/${r.emailMessageId}`}
+                          target="_blank"
+                          rel="noopener"
+                          title={`Open in Gmail: ${r.emailSubject ?? ""}`}
+                          className="ml-1.5 text-emerald-600 hover:underline"
+                        >
+                          mail
+                        </a>
+                      )}
                     </td>
                     <td className="px-3.5 py-2.5 text-right font-mono tabular-nums">
                       {formatInr(r.total)}

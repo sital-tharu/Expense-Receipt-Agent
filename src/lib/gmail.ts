@@ -127,7 +127,7 @@ export async function syncGmail(): Promise<SyncResult | { needsAuth: true }> {
       await db
         .collection("receipts")
         .doc(receiptId)
-        .update({ emailSubject: subject, emailFrom: from });
+        .update({ emailSubject: subject, emailFrom: from, emailMessageId: id });
       await db.collection(PROCESSED_COLLECTION).doc(id).set({
         receiptId,
         subject,
