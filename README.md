@@ -22,10 +22,12 @@ recurring subscriptions before they quietly drain your account.
 4. **Subscriptions get flagged** — same merchant + similar amount recurring
    ~monthly triggers a flag like *"Netflix — ₹649/mo, 3 months in a row"*,
    plus a combined "₹1,067/mo in subscriptions" callout.
-5. **It reasons about your spending** — anomaly detection compares each
-   category against your 4-week average (*"Food spend is 40% above your usual
-   weekly average"*), and every extraction carries a confidence
-   self-assessment — uncertain receipts get a "Needs review" badge.
+5. **It reasons about your spending — and shows its work** — anomaly detection
+   compares each category against your 4-week average (*"Food spend is 40%
+   above your usual weekly average"*) with the baseline and formula one click
+   away; every extraction carries a confidence self-assessment ("Needs review"
+   badge when unsure); and each receipt keeps its provenance with a link back
+   to the original image.
 
 ## Tech stack
 
