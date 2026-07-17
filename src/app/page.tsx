@@ -1,6 +1,8 @@
 import Link from "next/link";
 import CategoryBars from "@/components/CategoryBars";
+import GmailSync from "@/components/GmailSync";
 import { getReceipts } from "@/lib/firestore";
+import { isGmailConnected } from "@/lib/gmail-auth";
 import {
   addDays,
   categoryAnomaly,
@@ -270,12 +272,15 @@ export default async function DashboardPage({
               </Link>
             )}
           </div>
-          <Link
-            href="/upload"
-            className="text-[13px] font-medium text-emerald-600 hover:text-emerald-500"
-          >
-            + Add receipt
-          </Link>
+          <span className="inline-flex items-center gap-3">
+            <GmailSync connected={isGmailConnected()} />
+            <Link
+              href="/upload"
+              className="text-[13px] font-medium text-emerald-600 hover:text-emerald-500"
+            >
+              + Add receipt
+            </Link>
+          </span>
         </div>
 
         {weekReceipts.length === 0 ? (
@@ -319,7 +324,7 @@ export default async function DashboardPage({
                     key={r.id}
                     className="border-t border-gray-100 dark:border-gray-900"
                   >
-                    <td className="px-3.5 py-2.5">
+                    <td className="px-3.5 py-2.5" title={r.emailSubject}>
                       {r.merchant}
                       {r.confidence === "low" && (
                         <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] text-amber-800 dark:bg-amber-950 dark:text-amber-300">
