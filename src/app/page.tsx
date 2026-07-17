@@ -116,7 +116,7 @@ export default async function DashboardPage({
         </div>
         {subscriptions.length > 0 && (
           <div className="text-right">
-            <p className="text-xs text-gray-400">Subscriptions total</p>
+            <p className="text-xs text-gray-400">Subscriptions · monthly total</p>
             <p className="mt-0.5 font-mono text-[15px] font-medium">
               {formatInr(subsTotal)}/mo
             </p>
@@ -138,7 +138,7 @@ export default async function DashboardPage({
       {/* Stat tiles */}
       <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-[1.3fr_1fr]">
         <div className="rounded-xl bg-gray-50 p-4 dark:bg-gray-900/60">
-          <p className="text-[13px] text-gray-500">Total spend</p>
+          <p className="text-[13px] text-gray-500">Total spend · this week</p>
           <p className="mt-1 font-mono text-3xl font-medium tracking-tight">
             {formatInr(stats.total)}
           </p>
@@ -167,12 +167,36 @@ export default async function DashboardPage({
       {anomaly && (
         <section className="mt-6">
           <h2 className="text-[13px] text-gray-500">Anomaly detected</h2>
-          <div className="mt-2 flex items-center gap-2 rounded-lg bg-amber-50 px-3.5 py-2.5 dark:bg-amber-950/60">
-            <span aria-hidden>⚠️</span>
-            <p className="text-[13px] text-amber-900 dark:text-amber-200">
-              {anomaly.category} spend is {anomaly.pctAbove}% above your usual
-              weekly average
+          <div className="mt-2 rounded-lg bg-amber-50 px-3.5 py-2.5 dark:bg-amber-950/60">
+            <div className="flex items-center gap-2">
+              <span aria-hidden>⚠️</span>
+              <p className="text-[13px] text-amber-900 dark:text-amber-200">
+                {anomaly.category} spend is {anomaly.pctAbove}% above your usual
+                weekly average
+              </p>
+            </div>
+            <p className="mt-1 pl-6 text-xs text-amber-800/80 dark:text-amber-300/80">
+              {formatInr(anomaly.weekTotal)} this week vs{" "}
+              {formatInr(anomaly.weeklyAvg)}/week average over the previous{" "}
+              {anomaly.lookbackWeeks} weeks
             </p>
+            <details className="mt-1.5 pl-6">
+              <summary className="cursor-pointer text-xs text-amber-700 hover:underline dark:text-amber-400">
+                How is this calculated?
+              </summary>
+              <div className="mt-1.5 space-y-1 text-xs text-amber-800/90 dark:text-amber-300/90">
+                <p className="font-mono">
+                  ({formatInr(anomaly.weekTotal)} − {formatInr(anomaly.weeklyAvg)})
+                  ÷ {formatInr(anomaly.weeklyAvg)} × 100 = {anomaly.pctAbove}%
+                </p>
+                <p>
+                  The weekly average is your total {anomaly.category} spend over
+                  the {anomaly.lookbackWeeks} weeks before this one, divided by{" "}
+                  {anomaly.lookbackWeeks}. Categories averaging under ₹200/week
+                  are never flagged.
+                </p>
+              </div>
+            </details>
           </div>
         </section>
       )}
@@ -180,7 +204,9 @@ export default async function DashboardPage({
       {/* Recurring subscriptions */}
       {subscriptions.length > 0 && (
         <section className="mt-6">
-          <h2 className="text-[13px] text-gray-500">Recurring subscriptions</h2>
+          <h2 className="text-[13px] text-gray-500">
+            Recurring subscriptions · monthly
+          </h2>
           <ul className="mt-2 flex flex-col gap-2">
             {subscriptions.map((s) => (
               <li
@@ -210,7 +236,9 @@ export default async function DashboardPage({
 
       {/* Spend by category */}
       <section className="mt-6">
-        <h2 className="text-[13px] text-gray-500">Spend by category</h2>
+        <h2 className="text-[13px] text-gray-500">
+          Spend by category · this week
+        </h2>
         <div className="mt-3">
           <CategoryBars
             data={stats.byCategory}
