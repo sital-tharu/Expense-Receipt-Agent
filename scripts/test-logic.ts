@@ -99,6 +99,9 @@ const spike = categoryAnomaly(anomalyReceipts, anchor);
 assert.ok(spike, "spike detected");
 assert.strictEqual(spike.category, "Food");
 assert.strictEqual(spike.pctAbove, 40);
+assert.strictEqual(spike.weekTotal, 700, "baseline: week total exposed");
+assert.strictEqual(spike.weeklyAvg, 500, "baseline: weekly average exposed");
+assert.strictEqual(spike.lookbackWeeks, 4, "baseline: window exposed");
 
 // 10. below the 1.3× threshold → no anomaly
 assert.strictEqual(

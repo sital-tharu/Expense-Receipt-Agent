@@ -107,6 +107,9 @@ export function formatInr(amount: number): string {
 export interface CategoryAnomaly {
   category: Category;
   pctAbove: number; // e.g. 40 → "40% above your usual weekly average"
+  weekTotal: number; // this week's spend in the flagged category
+  weeklyAvg: number; // baseline: mean over the lookback window
+  lookbackWeeks: number; // window size, for display ("last 4 weeks")
 }
 
 const ANOMALY_LOOKBACK_WEEKS = 4;
@@ -142,7 +145,15 @@ export function categoryAnomaly(
     const avg = (lookback.get(category) ?? 0) / ANOMALY_LOOKBACK_WEEKS;
     if (avg < ANOMALY_MIN_AVG || total < avg * ANOMALY_THRESHOLD) continue;
     const pctAbove = Math.round((total / avg - 1) * 100);
-    if (!best || pctAbove > best.pctAbove) best = { category, pctAbove };
+    if (!best || pctAbove > best.pctAbove) {
+      best = {
+        category,
+        pctAbove,
+        weekTotal: total,
+        weeklyAvg: Math.round(avg),
+        lookbackWeeks: ANOMALY_LOOKBACK_WEEKS,
+      };
+    }
   }
   return best;
 }
