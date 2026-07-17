@@ -18,6 +18,11 @@ import { categoryColorVar, dashboardHref } from "@/lib/urls";
 // Firestore data changes between requests — never prerender this page
 export const dynamic = "force-dynamic";
 
+function provenance(r: StoredReceipt): string {
+  if (r.seeded) return "Demo";
+  return r.source === "email" ? "Email" : "Photo";
+}
+
 function CategoryBadge({ category }: { category: Category }) {
   const color = categoryColorVar(category);
   return (
@@ -301,6 +306,7 @@ export default async function DashboardPage({
                   <th className="px-3.5 py-2 font-medium">Merchant</th>
                   <th className="px-3.5 py-2 font-medium">Date</th>
                   <th className="px-3.5 py-2 font-medium">Category</th>
+                  <th className="px-3.5 py-2 font-medium">Source</th>
                   <th className="px-3.5 py-2 text-right font-medium">Amount</th>
                 </tr>
               </thead>
@@ -323,6 +329,20 @@ export default async function DashboardPage({
                     </td>
                     <td className="px-3.5 py-2.5">
                       <CategoryBadge category={r.category} />
+                    </td>
+                    <td className="px-3.5 py-2.5 whitespace-nowrap text-gray-500">
+                      {provenance(r)}
+                      {r.hasImage && (
+                        <a
+                          href={`/api/receipts/${r.id}/image`}
+                          target="_blank"
+                          rel="noopener"
+                          title="View the original receipt image"
+                          className="ml-1.5 text-emerald-600 hover:underline"
+                        >
+                          view
+                        </a>
+                      )}
                     </td>
                     <td className="px-3.5 py-2.5 text-right font-mono tabular-nums">
                       {formatInr(r.total)}
