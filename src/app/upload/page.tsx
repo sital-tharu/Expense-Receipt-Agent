@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { formatInr } from "@/lib/stats";
 import type { Receipt } from "@/lib/types";
 
 type Status = "idle" | "extracting" | "done" | "error";
@@ -99,7 +100,7 @@ export default function UploadPage() {
             <dt className="text-gray-500">Date</dt>
             <dd>{receipt.date}</dd>
             <dt className="text-gray-500">Total</dt>
-            <dd className="font-mono">₹{receipt.total.toLocaleString("en-IN")}</dd>
+            <dd className="font-mono">{formatInr(receipt.total)}</dd>
             <dt className="text-gray-500">Category</dt>
             <dd>{receipt.category}</dd>
           </dl>
@@ -110,7 +111,7 @@ export default function UploadPage() {
                   <tr key={i} className="border-t border-gray-100 dark:border-gray-800">
                     <td className="py-1">{item.name}</td>
                     <td className="py-1 text-right font-mono">
-                      ₹{item.price.toLocaleString("en-IN")}
+                      {formatInr(item.price)}
                     </td>
                   </tr>
                 ))}

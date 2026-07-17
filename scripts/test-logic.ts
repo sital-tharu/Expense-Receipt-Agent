@@ -8,6 +8,7 @@ import { detectSubscriptions, monthlyTotal } from "../src/lib/subscriptions";
 import {
   addDays,
   categoryAnomaly,
+  formatInr,
   isoDate,
   mondayOf,
   resolveWeekAnchor,
@@ -137,5 +138,40 @@ assert.strictEqual(
   ]),
   768,
 );
+
+// 13. INR formatting rules: whole → no decimals, fractional → exactly two
+assert.strictEqual(formatInr(2619), "₹2,619");
+assert.strictEqual(formatInr(424.71), "₹424.71");
+assert.strictEqual(formatInr(424.7), "₹424.70", "fractional pads to 2 dp");
+assert.strictEqual(formatInr(0), "₹0");
+assert.strictEqual(formatInr(123456), "₹1,23,456", "Indian digit grouping");
+
+// 14. weekStats byCategory is descending and sums to the weekly total
+const multiCat = [
+  r("A", isoDate(addDays(mondayOf(new Date()), 1)), 100, "Food"),
+  r("B", isoDate(addDays(mondayOf(new Date()), 1)), 900, "Shopping"),
+  r("C", isoDate(addDays(mondayOf(new Date()), 2)), 400, "Transport"),
+];
+const mc = weekStats(multiCat);
+assert.deepStrictEqual(
+  mc.byCategory.map((c) => c.category),
+  ["Shopping", "Transport", "Food"],
+  "categories sorted by spend descending",
+);
+assert.strictEqual(
+  mc.byCategory.reduce((s, c) => s + c.total, 0),
+  mc.total,
+  "category totals sum to week total",
+);
+
+// 15. duplicated charges (e.g. reseeding without --wipe) don't break detection
+const dup = (m: string, d: string, t: number) => [r(m, d, t), r(m, d, t)];
+flags = detectSubscriptions([
+  ...dup("Prime", daysAgo(3), 299),
+  ...dup("Prime", daysAgo(33), 299),
+  ...dup("Prime", daysAgo(63), 299),
+]);
+assert.strictEqual(flags.length, 1, "duplicates still detected");
+assert.strictEqual(flags[0].occurrences, 3);
 
 console.log("All subscription-detection and stats checks passed ✓");

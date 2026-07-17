@@ -100,8 +100,13 @@ export function weekStats(
   };
 }
 
+// Formatting rule (app-wide): whole rupees show no decimals, fractional
+// amounts always show exactly two. Route every displayed amount through here.
 export function formatInr(amount: number): string {
-  return `₹${amount.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
+  const options: Intl.NumberFormatOptions = Number.isInteger(amount)
+    ? { maximumFractionDigits: 0 }
+    : { minimumFractionDigits: 2, maximumFractionDigits: 2 };
+  return `₹${amount.toLocaleString("en-IN", options)}`;
 }
 
 export interface CategoryAnomaly {
