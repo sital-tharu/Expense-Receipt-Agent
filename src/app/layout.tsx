@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
+import GmailSync from "@/components/GmailSync";
+import { isGmailConnected } from "@/lib/gmail-auth";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -35,15 +37,15 @@ export default function RootLayout({
             <Link href="/" className="font-semibold">
               🧾 Expense Agent
             </Link>
-            <Link href="/" className="text-gray-500 hover:text-gray-900 dark:hover:text-gray-100">
-              Dashboard
-            </Link>
             <Link
               href="/upload"
               className="text-gray-500 hover:text-gray-900 dark:hover:text-gray-100"
             >
               Upload
             </Link>
+            <span className="ml-auto">
+              <GmailSync connected={isGmailConnected()} />
+            </span>
           </nav>
         </header>
         {children}
