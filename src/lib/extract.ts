@@ -70,33 +70,65 @@ Rules:
   or you are not certain about the merchant, date, or total; otherwise "high".`;
 }
 
-export async function extractReceipt(
-  imageBytes: Buffer,
-  mimeType: string,
-): Promise<Receipt> {
-  const ai = getGeminiClient();
+type ContentPart = { text: string } | { inlineData: { mimeType: string; data: string } };
 
+async function runExtraction(parts: ContentPart[]): Promise<Receipt> {
+  const ai = getGeminiClient();
   const response = await ai.models.generateContent({
     model: GEMINI_MODEL,
-    contents: [
-      {
-        role: "user",
-        parts: [
-          { inlineData: { mimeType, data: imageBytes.toString("base64") } },
-          { text: buildPrompt() },
-        ],
-      },
-    ],
+    contents: [{ role: "user", parts }],
     config: {
       responseMimeType: "application/json",
       responseJsonSchema: RESPONSE_JSON_SCHEMA,
       temperature: 0,
     },
   });
-
   const text = response.text;
   if (!text) {
-    throw new Error("Gemini returned an empty response for the receipt image");
+    throw new Error("Gemini returned an empty response for the receipt");
   }
   return ReceiptSchema.parse(JSON.parse(text));
+}
+
+export async function extractReceipt(
+  imageBytes: Buffer,
+  mimeType: string,
+): Promise<Receipt> {
+  return runExtraction([
+    { inlineData: { mimeType, data: imageBytes.toString("base64") } },
+    { text: buildPrompt() },
+  ]);
+}
+
+// Email bodies can be huge (styled HTML) — keep well inside context limits
+const MAX_EMAIL_CHARS = 20_000;
+
+function buildEmailPrompt(): string {
+  const today = new Date().toISOString().slice(0, 10);
+  return `Extract structured expense data from this email (raw HTML or plain
+text). Today's date is ${today}. The email should be a purchase, order, or
+payment confirmation (e.g. food delivery, shopping, bank/UPI alert, invoice).
+
+Rules:
+- merchant: the business that charged the money (e.g. "Swiggy", "Amazon") —
+  never the mail provider or the bank sending the alert (for bank/UPI alerts
+  use the payee named in the message).
+- date: the transaction date as YYYY-MM-DD; if only the email's sent date is
+  visible, use that.
+- total: the final amount paid in INR (order total after discounts, including
+  delivery fees and taxes) as a plain number.
+- lineItems: itemized purchases with name and price when listed; otherwise [].
+- category: pick the single best fit. Streaming/software/memberships →
+  Subscriptions; groceries/restaurants/food delivery → Food; fuel/cab/metro/
+  train → Transport; electricity/water/gas/mobile recharge → Utilities;
+  retail/online shopping → Shopping; anything else → Other.
+- confidence: "low" if this does not clearly look like a payment/receipt email
+  or you are unsure about the merchant, date, or total; otherwise "high".`;
+}
+
+export async function extractReceiptFromText(body: string): Promise<Receipt> {
+  return runExtraction([
+    { text: buildEmailPrompt() },
+    { text: `EMAIL CONTENT:\n${body.slice(0, MAX_EMAIL_CHARS)}` },
+  ]);
 }
