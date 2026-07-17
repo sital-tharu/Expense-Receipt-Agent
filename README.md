@@ -15,10 +15,17 @@ recurring subscriptions before they quietly drain your account.
 2. **Gemini reads it** — merchant, date, total, and line items are extracted
    as structured data and auto-categorized (Food, Transport, Subscriptions,
    Shopping, Utilities, Other).
-3. **Dashboard updates** — weekly spend total, spend-by-category chart, and a
-   recent receipts list, live from Firestore.
+3. **Dashboard updates** — weekly spend total with week-over-week delta,
+   color-coded spend-by-category bars, and the week's receipts, live from
+   Firestore. Flip between past weeks with the week navigator, and click a
+   category bar to filter the receipt list.
 4. **Subscriptions get flagged** — same merchant + similar amount recurring
-   ~monthly triggers a flag like *"Netflix — ₹649/mo, 3 months in a row"*.
+   ~monthly triggers a flag like *"Netflix — ₹649/mo, 3 months in a row"*,
+   plus a combined "₹1,067/mo in subscriptions" callout.
+5. **It reasons about your spending** — anomaly detection compares each
+   category against your 4-week average (*"Food spend is 40% above your usual
+   weekly average"*), and every extraction carries a confidence
+   self-assessment — uncertain receipts get a "Needs review" badge.
 
 ## Tech stack
 
@@ -27,7 +34,6 @@ recurring subscriptions before they quietly drain your account.
 | Extraction & categorization | Gemini (multimodal, structured output) via `@google/genai` |
 | Storage | Firebase Firestore (`firebase-admin`, server-side) |
 | App | Next.js 16 (App Router) + TypeScript + Tailwind |
-| Charts | Recharts |
 | Email intake | Gmail API |
 
 ## Setup
