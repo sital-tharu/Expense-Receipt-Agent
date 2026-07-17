@@ -176,7 +176,10 @@ export default async function DashboardPage({
             <div className="flex items-center gap-2">
               <span aria-hidden>⚠️</span>
               <p className="text-[13px] text-amber-900 dark:text-amber-200">
-                {anomaly.category} spend is {anomaly.pctAbove}% above your usual
+                {anomaly.category} spend is{" "}
+                {anomaly.ratio >= 2
+                  ? `${anomaly.ratio}× your usual`
+                  : `${anomaly.pctAbove}% above your usual`}{" "}
                 weekly average
               </p>
             </div>
@@ -191,14 +194,14 @@ export default async function DashboardPage({
               </summary>
               <div className="mt-1.5 space-y-1 text-xs text-amber-800/90 dark:text-amber-300/90">
                 <p className="font-mono">
-                  ({formatInr(anomaly.weekTotal)} − {formatInr(anomaly.weeklyAvg)})
-                  ÷ {formatInr(anomaly.weeklyAvg)} × 100 = {anomaly.pctAbove}%
+                  {formatInr(anomaly.weekTotal)} ÷ {formatInr(anomaly.weeklyAvg)}{" "}
+                  = {anomaly.ratio}× your usual ({anomaly.pctAbove}% above)
                 </p>
                 <p>
                   The weekly average is your total {anomaly.category} spend over
                   the {anomaly.lookbackWeeks} weeks before this one, divided by{" "}
-                  {anomaly.lookbackWeeks}. Categories averaging under ₹200/week
-                  are never flagged.
+                  {anomaly.lookbackWeeks}. Categories averaging under{" "}
+                  {formatInr(anomaly.minAvg)}/week are never flagged.
                 </p>
               </div>
             </details>
