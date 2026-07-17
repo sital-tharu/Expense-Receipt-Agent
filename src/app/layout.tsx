@@ -2,8 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 import GmailSync from "@/components/GmailSync";
-import { isGmailConnected } from "@/lib/gmail-auth";
+import { isGmailConnected, isGmailProtected } from "@/lib/gmail-auth";
 import "./globals.css";
+
+// The header's Gmail-connected state comes from Firestore — render all
+// pages per-request so it can never go stale in a static shell.
+export const dynamic = "force-dynamic";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,11 +25,12 @@ export const metadata: Metadata = {
     "Turns scattered receipts into a weekly spending dashboard — auto-categorized by Gemini, with recurring-subscription flags.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const gmailConnected = await isGmailConnected();
   return (
     <html
       lang="en"
@@ -44,7 +49,10 @@ export default function RootLayout({
               Upload
             </Link>
             <span className="ml-auto">
-              <GmailSync connected={isGmailConnected()} />
+              <GmailSync
+                connected={gmailConnected}
+                protectionEnabled={isGmailProtected()}
+              />
             </span>
           </nav>
         </header>
