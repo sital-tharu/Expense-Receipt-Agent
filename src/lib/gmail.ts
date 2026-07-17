@@ -1,6 +1,6 @@
 import { extractReceipt, extractReceiptFromText } from "./extract";
 import { getAccessToken } from "./gmail-auth";
-import { getDb, saveReceipt } from "./firestore";
+import { getDb, RECEIPT_IMAGES_COLLECTION, saveReceipt } from "./firestore";
 
 const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";
 const PROCESSED_COLLECTION = "processedEmails";
@@ -92,8 +92,21 @@ export async function syncGmail(): Promise<SyncResult | { needsAuth: true }> {
   for (const { id } of messages) {
     const seen = await db.collection(PROCESSED_COLLECTION).doc(id).get();
     if (seen.exists) {
-      result.skipped++;
-      continue;
+      // Only skip while the imported receipt still exists — if the user
+      // deleted it (e.g. in the Firebase console), clear the stale marker
+      // and reimport the email.
+      const receiptId = seen.data()?.receiptId as string | undefined;
+      const receiptDoc = receiptId
+        ? await db.collection("receipts").doc(receiptId).get()
+        : null;
+      if (receiptDoc?.exists) {
+        result.skipped++;
+        continue;
+      }
+      await seen.ref.delete();
+      if (receiptId) {
+        await db.collection(RECEIPT_IMAGES_COLLECTION).doc(receiptId).delete();
+      }
     }
 
     let subject = "(unknown)";

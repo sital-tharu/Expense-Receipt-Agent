@@ -7,7 +7,7 @@ const RECEIPTS_COLLECTION = "receipts";
 // Raw receipt images live in their own collection so receipt list queries
 // stay light. Base64 in Firestore is a deliberate demo-grade tradeoff
 // (no Blaze plan needed); docs are capped well under Firestore's 1 MiB limit.
-const RECEIPT_IMAGES_COLLECTION = "receiptImages";
+export const RECEIPT_IMAGES_COLLECTION = "receiptImages";
 const MAX_EMBEDDED_IMAGE_BYTES = 700 * 1024;
 
 function loadServiceAccount(): Record<string, unknown> {
