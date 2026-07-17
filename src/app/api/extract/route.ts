@@ -31,7 +31,10 @@ export async function POST(request: Request) {
   try {
     const bytes = Buffer.from(await file.arrayBuffer());
     const receipt = await extractReceipt(bytes, file.type);
-    const id = await saveReceipt(receipt, "photo");
+    const id = await saveReceipt(receipt, "photo", {
+      bytes,
+      mimeType: file.type,
+    });
     return NextResponse.json({ id, receipt });
   } catch (err) {
     console.error("Receipt extraction failed:", err);

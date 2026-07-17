@@ -40,7 +40,8 @@ async function main() {
   const path = resolve(file);
   console.log(`Extracting from ${path} ...`);
   const started = Date.now();
-  const receipt = await extractReceipt(readFileSync(path), mimeType);
+  const imageBytes = readFileSync(path);
+  const receipt = await extractReceipt(imageBytes, mimeType);
   console.log(`Extracted in ${((Date.now() - started) / 1000).toFixed(1)}s:\n`);
   console.log(JSON.stringify(receipt, null, 2));
 
@@ -49,8 +50,8 @@ async function main() {
     return;
   }
 
-  const id = await saveReceipt(receipt, "photo");
-  console.log(`\nSaved to Firestore: receipts/${id}`);
+  const id = await saveReceipt(receipt, "photo", { bytes: imageBytes, mimeType });
+  console.log(`\nSaved to Firestore: receipts/${id} (image embedded)`);
 }
 
 main().catch((err) => {

@@ -36,4 +36,6 @@ export interface StoredReceipt extends Receipt {
   id: string;
   source: ReceiptSource;
   createdAt: string; // ISO timestamp
+  hasImage?: boolean; // raw image stored in receiptImages/{id}
+  seeded?: boolean; // mock demo data (npm run seed)
 }
