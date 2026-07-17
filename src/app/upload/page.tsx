@@ -100,7 +100,14 @@ export default function UploadPage() {
             <dt className="text-gray-500">Date</dt>
             <dd>{receipt.date}</dd>
             <dt className="text-gray-500">Total</dt>
-            <dd className="font-mono">{formatInr(receipt.total)}</dd>
+            <dd className="font-mono">
+              {formatInr(receipt.total)}
+              {receipt.originalCurrency && receipt.originalAmount != null && (
+                <span className="ml-2 text-xs text-gray-500">
+                  ≈ {receipt.originalCurrency} {receipt.originalAmount}
+                </span>
+              )}
+            </dd>
             <dt className="text-gray-500">Category</dt>
             <dd>{receipt.category}</dd>
           </dl>

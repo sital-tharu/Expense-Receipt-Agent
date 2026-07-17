@@ -1,4 +1,5 @@
 import { GEMINI_MODEL, getGeminiClient } from "./gemini";
+import { convertToInr } from "./rates";
 import { CATEGORIES, ReceiptSchema, type Receipt } from "./types";
 
 const RESPONSE_JSON_SCHEMA = {
@@ -42,9 +43,53 @@ const RESPONSE_JSON_SCHEMA = {
       description:
         "Self-assessment: 'low' if the image is blurry, cropped, or any extracted field is uncertain; otherwise 'high'.",
     },
+    originalAmount: {
+      type: ["number", "null"],
+      description:
+        "Pre-conversion amount when the receipt is NOT in INR; null for INR receipts.",
+    },
+    originalCurrency: {
+      type: ["string", "null"],
+      description:
+        "ISO 4217 code of the original currency (e.g. USD, EUR); null for INR receipts.",
+    },
   },
-  required: ["merchant", "date", "total", "lineItems", "category", "confidence"],
+  required: [
+    "merchant",
+    "date",
+    "total",
+    "lineItems",
+    "category",
+    "confidence",
+    "originalAmount",
+    "originalCurrency",
+  ],
 };
+
+const CURRENCY_RULE = `If the amount is in a foreign currency (e.g. USD, EUR,
+GBP), set originalAmount + originalCurrency to that value and its ISO 4217
+code, and set total to your best approximate INR conversion (it is recomputed
+from a configured exchange rate afterwards). For INR amounts set both to null.`;
+
+/**
+ * Deterministic conversion in code: when a rate is configured for the
+ * detected currency, the model's approximate total is replaced with
+ * originalAmount × rate. Unknown currencies keep the model's estimate.
+ */
+export function applyExchangeRate(
+  receipt: Receipt,
+  env: NodeJS.ProcessEnv = process.env,
+): Receipt {
+  if (receipt.originalCurrency && receipt.originalAmount != null) {
+    const converted = convertToInr(
+      receipt.originalAmount,
+      receipt.originalCurrency,
+      env,
+    );
+    if (converted !== null) return { ...receipt, total: converted };
+  }
+  return receipt;
+}
 
 function buildPrompt(): string {
   const today = new Date().toISOString().slice(0, 10);
@@ -59,7 +104,7 @@ Rules:
   handles, or transaction codes.
 - date: the transaction date as YYYY-MM-DD. If the year is missing, use the
   most recent past occurrence of that day relative to today.
-- total: the final amount paid in INR as a plain number.
+- total: the final amount paid in INR as a plain number. ${CURRENCY_RULE}
 - lineItems: itemized purchases with name and price. Return [] when none are
   visible.
 - category: pick the single best fit. Streaming/software/memberships →
@@ -70,33 +115,65 @@ Rules:
   or you are not certain about the merchant, date, or total; otherwise "high".`;
 }
 
-export async function extractReceipt(
-  imageBytes: Buffer,
-  mimeType: string,
-): Promise<Receipt> {
-  const ai = getGeminiClient();
+type ContentPart = { text: string } | { inlineData: { mimeType: string; data: string } };
 
+async function runExtraction(parts: ContentPart[]): Promise<Receipt> {
+  const ai = getGeminiClient();
   const response = await ai.models.generateContent({
     model: GEMINI_MODEL,
-    contents: [
-      {
-        role: "user",
-        parts: [
-          { inlineData: { mimeType, data: imageBytes.toString("base64") } },
-          { text: buildPrompt() },
-        ],
-      },
-    ],
+    contents: [{ role: "user", parts }],
     config: {
       responseMimeType: "application/json",
       responseJsonSchema: RESPONSE_JSON_SCHEMA,
       temperature: 0,
     },
   });
-
   const text = response.text;
   if (!text) {
-    throw new Error("Gemini returned an empty response for the receipt image");
+    throw new Error("Gemini returned an empty response for the receipt");
   }
-  return ReceiptSchema.parse(JSON.parse(text));
+  return applyExchangeRate(ReceiptSchema.parse(JSON.parse(text)));
+}
+
+export async function extractReceipt(
+  imageBytes: Buffer,
+  mimeType: string,
+): Promise<Receipt> {
+  return runExtraction([
+    { inlineData: { mimeType, data: imageBytes.toString("base64") } },
+    { text: buildPrompt() },
+  ]);
+}
+
+// Email bodies can be huge (styled HTML) — keep well inside context limits
+const MAX_EMAIL_CHARS = 20_000;
+
+function buildEmailPrompt(): string {
+  const today = new Date().toISOString().slice(0, 10);
+  return `Extract structured expense data from this email (raw HTML or plain
+text). Today's date is ${today}. The email should be a purchase, order, or
+payment confirmation (e.g. food delivery, shopping, bank/UPI alert, invoice).
+
+Rules:
+- merchant: the business that charged the money (e.g. "Swiggy", "Amazon") —
+  never the mail provider or the bank sending the alert (for bank/UPI alerts
+  use the payee named in the message).
+- date: the transaction date as YYYY-MM-DD; if only the email's sent date is
+  visible, use that.
+- total: the final amount paid in INR (order total after discounts, including
+  delivery fees and taxes) as a plain number. ${CURRENCY_RULE}
+- lineItems: itemized purchases with name and price when listed; otherwise [].
+- category: pick the single best fit. Streaming/software/memberships →
+  Subscriptions; groceries/restaurants/food delivery → Food; fuel/cab/metro/
+  train → Transport; electricity/water/gas/mobile recharge → Utilities;
+  retail/online shopping → Shopping; anything else → Other.
+- confidence: "low" if this does not clearly look like a payment/receipt email
+  or you are unsure about the merchant, date, or total; otherwise "high".`;
+}
+
+export async function extractReceiptFromText(body: string): Promise<Receipt> {
+  return runExtraction([
+    { text: buildEmailPrompt() },
+    { text: `EMAIL CONTENT:\n${body.slice(0, MAX_EMAIL_CHARS)}` },
+  ]);
 }

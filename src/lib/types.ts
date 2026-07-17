@@ -26,6 +26,10 @@ export const ReceiptSchema = z.object({
   // Model self-assessment; "low" surfaces a "Needs review" badge in the UI.
   // Defaulted so receipts stored before this field existed still parse.
   confidence: z.enum(["high", "low"]).default("high"),
+  // Non-INR receipts: `total` holds the approximate INR conversion and the
+  // pre-conversion value is preserved here. Both null/absent for INR receipts.
+  originalAmount: z.number().positive().nullish(),
+  originalCurrency: z.string().length(3).nullish(),
 });
 
 export type Receipt = z.infer<typeof ReceiptSchema>;
@@ -38,4 +42,7 @@ export interface StoredReceipt extends Receipt {
   createdAt: string; // ISO timestamp
   hasImage?: boolean; // raw image stored in receiptImages/{id}
   seeded?: boolean; // mock demo data (npm run seed)
+  emailSubject?: string; // provenance for source === "email"
+  emailFrom?: string;
+  emailMessageId?: string; // Gmail message id → mail.google.com/mail/u/0/#all/<id>
 }

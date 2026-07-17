@@ -319,7 +319,7 @@ export default async function DashboardPage({
                     key={r.id}
                     className="border-t border-gray-100 dark:border-gray-900"
                   >
-                    <td className="px-3.5 py-2.5">
+                    <td className="px-3.5 py-2.5" title={r.emailSubject}>
                       {r.merchant}
                       {r.confidence === "low" && (
                         <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] text-amber-800 dark:bg-amber-950 dark:text-amber-300">
@@ -346,9 +346,28 @@ export default async function DashboardPage({
                           view
                         </a>
                       )}
+                      {r.source === "email" && r.emailMessageId && (
+                        <a
+                          href={`https://mail.google.com/mail/u/0/#all/${r.emailMessageId}`}
+                          target="_blank"
+                          rel="noopener"
+                          title={`Open in Gmail: ${r.emailSubject ?? ""}`}
+                          className="ml-1.5 text-emerald-600 hover:underline"
+                        >
+                          mail
+                        </a>
+                      )}
                     </td>
                     <td className="px-3.5 py-2.5 text-right font-mono tabular-nums">
                       {formatInr(r.total)}
+                      {r.originalCurrency && r.originalAmount != null && (
+                        <div
+                          className="text-[11px] text-gray-500"
+                          title="Original amount — ₹ value is an approximate conversion"
+                        >
+                          {r.originalCurrency} {r.originalAmount}
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}

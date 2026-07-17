@@ -4,6 +4,15 @@
  * Pure functions only — no Firestore or Gemini credentials needed.
  */
 import assert from "node:assert";
+import {
+  decodeBase64Url,
+  extractBody,
+  findImageAttachments,
+  getHeader,
+  type GmailPart,
+} from "../src/lib/gmail";
+import { applyExchangeRate } from "../src/lib/extract";
+import { convertToInr, exchangeRate } from "../src/lib/rates";
 import { detectSubscriptions, monthlyTotal } from "../src/lib/subscriptions";
 import {
   addDays,
@@ -14,7 +23,7 @@ import {
   resolveWeekAnchor,
   weekStats,
 } from "../src/lib/stats";
-import type { StoredReceipt } from "../src/lib/types";
+import { ReceiptSchema, type StoredReceipt } from "../src/lib/types";
 
 function daysAgo(n: number): string {
   const d = new Date();
@@ -197,5 +206,119 @@ flags = detectSubscriptions([
 ]);
 assert.strictEqual(flags.length, 1, "duplicates still detected");
 assert.strictEqual(flags[0].occurrences, 3);
+
+// 16. Gmail MIME helpers: base64url decoding (- and _ chars, no padding)
+assert.strictEqual(decodeBase64Url("SGVsbG8-Pw").toString("utf8"), "Hello>?");
+assert.strictEqual(
+  decodeBase64Url(Buffer.from("₹424.71").toString("base64url")).toString("utf8"),
+  "₹424.71",
+  "round-trips unicode",
+);
+
+// 17. body extraction prefers HTML over plain text, walks nested parts
+const b64 = (s: string) => Buffer.from(s).toString("base64url");
+const multipart: GmailPart = {
+  mimeType: "multipart/mixed",
+  headers: [{ name: "Subject", value: "Your Swiggy order" }],
+  parts: [
+    {
+      mimeType: "multipart/alternative",
+      parts: [
+        { mimeType: "text/plain", body: { data: b64("plain version") } },
+        { mimeType: "text/html", body: { data: b64("<b>html version</b>") } },
+      ],
+    },
+    {
+      mimeType: "image/jpeg",
+      filename: "receipt.jpeg",
+      body: { attachmentId: "att-1", size: 1234 },
+    },
+  ],
+};
+assert.strictEqual(extractBody(multipart), "<b>html version</b>");
+assert.strictEqual(
+  extractBody({ mimeType: "text/plain", body: { data: b64("only plain") } }),
+  "only plain",
+  "plain-only fallback",
+);
+assert.strictEqual(extractBody({ mimeType: "multipart/mixed", parts: [] }), null);
+
+// 18. image attachment discovery + case-insensitive headers
+assert.deepStrictEqual(findImageAttachments(multipart), [
+  { attachmentId: "att-1", mimeType: "image/jpeg", filename: "receipt.jpeg" },
+]);
+assert.strictEqual(getHeader(multipart, "subject"), "Your Swiggy order");
+assert.strictEqual(getHeader(multipart, "From"), undefined);
+
+// 19. foreign-currency fields: optional, nullable, ISO-code enforced
+const base = {
+  merchant: "Anthropic, PBC",
+  date: "2026-07-14",
+  total: 1760,
+  lineItems: [],
+  category: "Subscriptions" as const,
+  confidence: "high" as const,
+};
+assert.strictEqual(
+  ReceiptSchema.parse({ ...base, originalAmount: 20, originalCurrency: "USD" })
+    .originalCurrency,
+  "USD",
+);
+assert.strictEqual(
+  ReceiptSchema.parse({ ...base, originalAmount: null, originalCurrency: null })
+    .originalAmount,
+  null,
+  "explicit nulls accepted (INR receipts)",
+);
+assert.strictEqual(
+  ReceiptSchema.parse(base).originalAmount,
+  undefined,
+  "absent fields accepted (docs stored before this feature)",
+);
+assert.throws(
+  () => ReceiptSchema.parse({ ...base, originalAmount: 20, originalCurrency: "DOLLARS" }),
+  "non-ISO currency code rejected",
+);
+
+// 20. exchange rates: env override, built-in fallback, unknown currency
+const env = (o: Record<string, string>) => o as unknown as NodeJS.ProcessEnv;
+const rateEnv = env({ EXCHANGE_RATE_USD: "96.28" });
+assert.strictEqual(exchangeRate("USD", rateEnv), 96.28, "env override wins");
+assert.strictEqual(exchangeRate("usd", rateEnv), 96.28, "case-insensitive");
+assert.strictEqual(exchangeRate("USD", env({})), 88, "fallback");
+assert.strictEqual(exchangeRate("JPY", env({})), null, "unknown");
+assert.strictEqual(
+  exchangeRate("USD", env({ EXCHANGE_RATE_USD: "garbage" })),
+  88,
+  "invalid env value falls back",
+);
+assert.strictEqual(convertToInr(20, "USD", rateEnv), 1925.6);
+assert.strictEqual(convertToInr(19.99, "USD", rateEnv), 1924.64, "rounds to 2dp");
+
+// 21. applyExchangeRate: configured rate overrides the model's estimate
+const usdReceipt = {
+  ...base,
+  total: 1760, // model's rough guess
+  originalAmount: 20,
+  originalCurrency: "USD",
+};
+assert.strictEqual(
+  applyExchangeRate(usdReceipt, rateEnv).total,
+  1925.6,
+  "total recomputed in code",
+);
+assert.strictEqual(
+  applyExchangeRate({ ...usdReceipt, originalCurrency: "JPY" }, rateEnv).total,
+  1760,
+  "unknown currency keeps the model estimate",
+);
+assert.strictEqual(
+  applyExchangeRate(
+    { ...base, originalAmount: null, originalCurrency: null },
+    rateEnv,
+  ).total,
+  base.total,
+  "INR receipts untouched",
+);
 
 console.log("All subscription-detection and stats checks passed ✓");

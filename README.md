@@ -61,7 +61,23 @@ recurring subscriptions before they quietly drain your account.
    FIREBASE_SERVICE_ACCOUNT_PATH=./secrets/serviceAccount.json
    ```
 
-5. **Run**
+5. **Gmail intake (optional)** — lets the agent pull receipts straight from
+   your inbox:
+   1. In [console.cloud.google.com](https://console.cloud.google.com), select
+      the same project as your Firebase app → *APIs & Services → Library* →
+      enable **Gmail API**.
+   2. *APIs & Services → OAuth consent screen* → External → fill the app name,
+      add your own Gmail as a **test user**.
+   3. *APIs & Services → Credentials → Create credentials → OAuth client ID* →
+      type **Web application** → authorized redirect URI
+      `http://localhost:3000/api/gmail/callback`. Copy the client ID and
+      secret into `.env.local` (`GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`).
+   4. In Gmail, create a label named **receipts** and apply it to the emails
+      you want imported (or add a filter that does it automatically).
+   5. In the app, click **Connect Gmail** → approve read-only access → click
+      **Sync inbox**. Already-imported emails are skipped on every re-sync.
+
+6. **Run**
 
    ```bash
    npm run dev          # app at http://localhost:3000
@@ -82,7 +98,7 @@ recurring subscriptions before they quietly drain your account.
 - [x] Photo upload flow
 - [x] Weekly dashboard (totals, category chart, recent receipts)
 - [x] Subscription detection (rule-based: ~monthly cadence, ±10% amount)
-- [ ] Gmail intake
+- [x] Gmail intake (label-based, read-only, HTML bodies + image attachments)
 
 ---
 
