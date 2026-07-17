@@ -112,14 +112,30 @@ export function formatInr(amount: number): string {
 export interface CategoryAnomaly {
   category: Category;
   pctAbove: number; // e.g. 40 → "40% above your usual weekly average"
+  ratio: number; // weekTotal ÷ weeklyAvg, 1 decimal — "5.2× your usual"
   weekTotal: number; // this week's spend in the flagged category
   weeklyAvg: number; // baseline: mean over the lookback window
   lookbackWeeks: number; // window size, for display ("last 4 weeks")
+  minAvg: number; // effective baseline floor, for display
 }
 
-const ANOMALY_LOOKBACK_WEEKS = 4;
-const ANOMALY_MIN_AVG = 200; // ignore categories with a tiny baseline
-const ANOMALY_THRESHOLD = 1.3; // current week must be ≥130% of the average
+export interface AnomalyOptions {
+  minAvg: number; // categories averaging below this are never flagged
+  threshold: number; // current week must be ≥ this × the average
+  lookbackWeeks: number;
+}
+
+function envNumber(name: string, fallback: number): number {
+  const parsed = Number(process.env[name]);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+// Tunable via env vars (see .env.example); read once at module load
+const ANOMALY_DEFAULTS: AnomalyOptions = {
+  minAvg: envNumber("ANOMALY_MIN_AVG", 200),
+  threshold: envNumber("ANOMALY_THRESHOLD", 1.3),
+  lookbackWeeks: envNumber("ANOMALY_LOOKBACK_WEEKS", 4),
+};
 
 /**
  * Compares the displayed week's per-category spend against the mean of the
@@ -129,11 +145,13 @@ const ANOMALY_THRESHOLD = 1.3; // current week must be ≥130% of the average
 export function categoryAnomaly(
   receipts: StoredReceipt[],
   weekAnchor: Date,
+  opts?: Partial<AnomalyOptions>,
 ): CategoryAnomaly | null {
+  const { minAvg, threshold, lookbackWeeks } = { ...ANOMALY_DEFAULTS, ...opts };
   const monday = mondayOf(weekAnchor);
   const weekStart = isoDate(monday);
   const weekEnd = isoDate(addDays(monday, 6));
-  const lookbackStart = isoDate(addDays(monday, -7 * ANOMALY_LOOKBACK_WEEKS));
+  const lookbackStart = isoDate(addDays(monday, -7 * lookbackWeeks));
 
   const current = new Map<Category, number>();
   const lookback = new Map<Category, number>();
@@ -147,16 +165,18 @@ export function categoryAnomaly(
 
   let best: CategoryAnomaly | null = null;
   for (const [category, total] of current) {
-    const avg = (lookback.get(category) ?? 0) / ANOMALY_LOOKBACK_WEEKS;
-    if (avg < ANOMALY_MIN_AVG || total < avg * ANOMALY_THRESHOLD) continue;
+    const avg = (lookback.get(category) ?? 0) / lookbackWeeks;
+    if (avg < minAvg || total < avg * threshold) continue;
     const pctAbove = Math.round((total / avg - 1) * 100);
     if (!best || pctAbove > best.pctAbove) {
       best = {
         category,
         pctAbove,
+        ratio: Math.round((total / avg) * 10) / 10,
         weekTotal: total,
         weeklyAvg: Math.round(avg),
-        lookbackWeeks: ANOMALY_LOOKBACK_WEEKS,
+        lookbackWeeks,
+        minAvg,
       };
     }
   }

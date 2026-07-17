@@ -103,6 +103,8 @@ assert.strictEqual(spike.pctAbove, 40);
 assert.strictEqual(spike.weekTotal, 700, "baseline: week total exposed");
 assert.strictEqual(spike.weeklyAvg, 500, "baseline: weekly average exposed");
 assert.strictEqual(spike.lookbackWeeks, 4, "baseline: window exposed");
+assert.strictEqual(spike.ratio, 1.4, "ratio exposed (700/500)");
+assert.strictEqual(spike.minAvg, 200, "effective floor exposed");
 
 // 10. below the 1.3× threshold → no anomaly
 assert.strictEqual(
@@ -138,6 +140,28 @@ assert.strictEqual(
   ]),
   768,
 );
+
+// 12b. anomaly thresholds are configurable via opts
+const tinyBaseline = [
+  r("Chai", isoDate(addDays(anchor, 1)), 400, "Food"),
+  r("Chai", isoDate(addDays(anchor, -6)), 100, "Food"),
+];
+assert.strictEqual(categoryAnomaly(tinyBaseline, anchor), null);
+const tinyFlagged = categoryAnomaly(tinyBaseline, anchor, { minAvg: 20 });
+assert.ok(tinyFlagged, "lower minAvg flags the tiny baseline");
+assert.strictEqual(tinyFlagged.ratio, 16, "400 vs 25/week avg = 16×");
+assert.strictEqual(tinyFlagged.minAvg, 20, "override reflected in result");
+assert.strictEqual(
+  categoryAnomaly(anomalyReceipts, anchor, { threshold: 1.5 }),
+  null,
+  "raised threshold ignores a 1.4× spike",
+);
+const shortWindow = categoryAnomaly(tinyBaseline, anchor, {
+  lookbackWeeks: 1,
+  minAvg: 50,
+});
+assert.ok(shortWindow, "1-week lookback treats last week alone as the average");
+assert.strictEqual(shortWindow.weeklyAvg, 100);
 
 // 13. INR formatting rules: whole → no decimals, fractional → exactly two
 assert.strictEqual(formatInr(2619), "₹2,619");
