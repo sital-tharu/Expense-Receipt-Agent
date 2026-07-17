@@ -83,6 +83,23 @@ recurring subscriptions before they quietly drain your account.
    npm run dev          # app at http://localhost:3000
    ```
 
+## Deploying to Vercel (free)
+
+1. Push the repo to GitHub, then in [vercel.com](https://vercel.com) → *Add New →
+   Project* → import the repo (defaults are fine — Next.js is auto-detected).
+2. Under *Environment Variables*, add:
+   - `GEMINI_API_KEY`
+   - `FIREBASE_SERVICE_ACCOUNT_JSON` — the **entire** `serviceAccount.json`
+     pasted as one value (used instead of the file path)
+   - `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`
+   - `GMAIL_ROUTES_SECRET` — any passcode; required to connect/sync Gmail on
+     the public URL (the dashboard itself stays open)
+   - `EXCHANGE_RATE_USD` (and any other rates you use)
+3. In the Google Cloud console → your OAuth client → add a second authorized
+   redirect URI: `https://<your-app>.vercel.app/api/gmail/callback`.
+4. Deploy. On the live site, click **Connect Gmail**, enter your passcode,
+   approve — the token is stored in Firestore, so it survives deployments.
+
 ## Useful scripts
 
 | Command | What it does |

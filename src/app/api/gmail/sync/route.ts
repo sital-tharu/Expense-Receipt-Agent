@@ -1,7 +1,17 @@
 import { NextResponse } from "next/server";
+import { isGmailKeyValid } from "@/lib/gmail-auth";
 import { syncGmail } from "@/lib/gmail";
 
-export async function POST() {
+// A sync can run 25 emails through Gemini — allow up to a minute on Vercel
+export const maxDuration = 60;
+
+export async function POST(request: Request) {
+  if (!isGmailKeyValid(request.headers.get("x-gmail-key"))) {
+    return NextResponse.json(
+      { error: "Invalid or missing Gmail passcode", needsKey: true },
+      { status: 403 },
+    );
+  }
   try {
     const result = await syncGmail();
     if ("needsAuth" in result) {

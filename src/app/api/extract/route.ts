@@ -2,8 +2,12 @@ import { NextResponse } from "next/server";
 import { extractReceipt } from "@/lib/extract";
 import { saveReceipt } from "@/lib/firestore";
 
-const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+// Vercel rejects request bodies over ~4.5MB — keep our limit inside it so
+// users get our error message, not the platform's
+const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
+
+export const maxDuration = 30;
 
 export async function POST(request: Request) {
   const formData = await request.formData();
@@ -23,7 +27,7 @@ export async function POST(request: Request) {
   }
   if (file.size > MAX_IMAGE_BYTES) {
     return NextResponse.json(
-      { error: "Image too large (max 10 MB)" },
+      { error: "Image too large (max 4 MB)" },
       { status: 413 },
     );
   }
