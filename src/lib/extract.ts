@@ -1,4 +1,5 @@
 import { GEMINI_MODEL, getGeminiClient } from "./gemini";
+import { convertToInr } from "./rates";
 import { CATEGORIES, ReceiptSchema, type Receipt } from "./types";
 
 const RESPONSE_JSON_SCHEMA = {
@@ -66,9 +67,29 @@ const RESPONSE_JSON_SCHEMA = {
 };
 
 const CURRENCY_RULE = `If the amount is in a foreign currency (e.g. USD, EUR,
-GBP), convert total to INR using approximate rates (1 USD ≈ ₹88, 1 EUR ≈ ₹95,
-1 GBP ≈ ₹110) and set originalAmount + originalCurrency to the pre-conversion
-value and its ISO code. For INR amounts set both to null.`;
+GBP), set originalAmount + originalCurrency to that value and its ISO 4217
+code, and set total to your best approximate INR conversion (it is recomputed
+from a configured exchange rate afterwards). For INR amounts set both to null.`;
+
+/**
+ * Deterministic conversion in code: when a rate is configured for the
+ * detected currency, the model's approximate total is replaced with
+ * originalAmount × rate. Unknown currencies keep the model's estimate.
+ */
+export function applyExchangeRate(
+  receipt: Receipt,
+  env: NodeJS.ProcessEnv = process.env,
+): Receipt {
+  if (receipt.originalCurrency && receipt.originalAmount != null) {
+    const converted = convertToInr(
+      receipt.originalAmount,
+      receipt.originalCurrency,
+      env,
+    );
+    if (converted !== null) return { ...receipt, total: converted };
+  }
+  return receipt;
+}
 
 function buildPrompt(): string {
   const today = new Date().toISOString().slice(0, 10);
@@ -111,7 +132,7 @@ async function runExtraction(parts: ContentPart[]): Promise<Receipt> {
   if (!text) {
     throw new Error("Gemini returned an empty response for the receipt");
   }
-  return ReceiptSchema.parse(JSON.parse(text));
+  return applyExchangeRate(ReceiptSchema.parse(JSON.parse(text)));
 }
 
 export async function extractReceipt(

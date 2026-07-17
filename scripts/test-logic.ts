@@ -11,6 +11,8 @@ import {
   getHeader,
   type GmailPart,
 } from "../src/lib/gmail";
+import { applyExchangeRate } from "../src/lib/extract";
+import { convertToInr, exchangeRate } from "../src/lib/rates";
 import { detectSubscriptions, monthlyTotal } from "../src/lib/subscriptions";
 import {
   addDays,
@@ -276,6 +278,47 @@ assert.strictEqual(
 assert.throws(
   () => ReceiptSchema.parse({ ...base, originalAmount: 20, originalCurrency: "DOLLARS" }),
   "non-ISO currency code rejected",
+);
+
+// 20. exchange rates: env override, built-in fallback, unknown currency
+const env = (o: Record<string, string>) => o as unknown as NodeJS.ProcessEnv;
+const rateEnv = env({ EXCHANGE_RATE_USD: "96.28" });
+assert.strictEqual(exchangeRate("USD", rateEnv), 96.28, "env override wins");
+assert.strictEqual(exchangeRate("usd", rateEnv), 96.28, "case-insensitive");
+assert.strictEqual(exchangeRate("USD", env({})), 88, "fallback");
+assert.strictEqual(exchangeRate("JPY", env({})), null, "unknown");
+assert.strictEqual(
+  exchangeRate("USD", env({ EXCHANGE_RATE_USD: "garbage" })),
+  88,
+  "invalid env value falls back",
+);
+assert.strictEqual(convertToInr(20, "USD", rateEnv), 1925.6);
+assert.strictEqual(convertToInr(19.99, "USD", rateEnv), 1924.64, "rounds to 2dp");
+
+// 21. applyExchangeRate: configured rate overrides the model's estimate
+const usdReceipt = {
+  ...base,
+  total: 1760, // model's rough guess
+  originalAmount: 20,
+  originalCurrency: "USD",
+};
+assert.strictEqual(
+  applyExchangeRate(usdReceipt, rateEnv).total,
+  1925.6,
+  "total recomputed in code",
+);
+assert.strictEqual(
+  applyExchangeRate({ ...usdReceipt, originalCurrency: "JPY" }, rateEnv).total,
+  1760,
+  "unknown currency keeps the model estimate",
+);
+assert.strictEqual(
+  applyExchangeRate(
+    { ...base, originalAmount: null, originalCurrency: null },
+    rateEnv,
+  ).total,
+  base.total,
+  "INR receipts untouched",
 );
 
 console.log("All subscription-detection and stats checks passed ✓");
