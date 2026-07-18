@@ -1,6 +1,8 @@
 import Link from "next/link";
 import CategoryBars from "@/components/CategoryBars";
+import DeleteReceipt from "@/components/DeleteReceipt";
 import { getReceipts } from "@/lib/firestore";
+import { isOwnerProtected } from "@/lib/owner";
 import {
   addDays,
   categoryAnomaly,
@@ -311,6 +313,7 @@ export default async function DashboardPage({
                   <th className="px-3.5 py-2 font-medium">Category</th>
                   <th className="px-3.5 py-2 font-medium">Source</th>
                   <th className="px-3.5 py-2 text-right font-medium">Amount</th>
+                  <th className="w-0 px-1.5 py-2" aria-label="Actions" />
                 </tr>
               </thead>
               <tbody>
@@ -368,6 +371,13 @@ export default async function DashboardPage({
                           {r.originalCurrency} {r.originalAmount}
                         </div>
                       )}
+                    </td>
+                    <td className="px-1.5 py-2.5 text-center">
+                      <DeleteReceipt
+                        id={r.id}
+                        merchant={r.merchant}
+                        protectionEnabled={isOwnerProtected()}
+                      />
                     </td>
                   </tr>
                 ))}
