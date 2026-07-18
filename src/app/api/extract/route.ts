@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { extractReceipt } from "@/lib/extract";
 import { saveReceipt } from "@/lib/firestore";
+import { isOwnerKeyValid } from "@/lib/owner";
 
 // Vercel rejects request bodies over ~4.5MB — keep our limit inside it so
 // users get our error message, not the platform's
@@ -35,11 +36,16 @@ export async function POST(request: Request) {
   try {
     const bytes = Buffer.from(await file.arrayBuffer());
     const receipt = await extractReceipt(bytes, file.type);
+    // Visitors get try-it extraction only; just the owner writes to the
+    // dashboard (also stops strangers polluting the public demo data).
+    if (!isOwnerKeyValid(request.headers.get("x-owner-key"))) {
+      return NextResponse.json({ receipt, saved: false });
+    }
     const id = await saveReceipt(receipt, "photo", {
       bytes,
       mimeType: file.type,
     });
-    return NextResponse.json({ id, receipt });
+    return NextResponse.json({ id, receipt, saved: true });
   } catch (err) {
     console.error("Receipt extraction failed:", err);
     const message = err instanceof Error ? err.message : "Extraction failed";
