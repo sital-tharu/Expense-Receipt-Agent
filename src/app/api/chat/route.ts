@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { askAgent, MAX_QUESTION_CHARS } from "@/lib/chat";
+import { isOwnerKeyValid } from "@/lib/owner";
+import { consumeQuota, QUOTA_MESSAGE } from "@/lib/quota";
 
 export const maxDuration = 30;
 
@@ -21,6 +23,12 @@ export async function POST(request: Request) {
   }
 
   try {
+    // Owner questions don't count against the public demo's daily cap
+    if (!isOwnerKeyValid(request.headers.get("x-owner-key"))) {
+      if (!(await consumeQuota("chat"))) {
+        return NextResponse.json({ error: QUOTA_MESSAGE }, { status: 429 });
+      }
+    }
     const answer = await askAgent(question.trim());
     return NextResponse.json({ answer });
   } catch (err) {
