@@ -23,9 +23,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Expense & Receipt Agent",
+  title: "Rupee Radar",
   description:
-    "Turns scattered receipts into a weekly spending dashboard — auto-categorized by Gemini, with recurring-subscription flags.",
+    "Catches every receipt, flags every subscription — an AI agent that turns scattered receipts into a weekly spending dashboard you can talk to.",
 };
 
 export default async function RootLayout({
@@ -43,7 +43,7 @@ export default async function RootLayout({
         <header className="border-b border-gray-200 dark:border-gray-800">
           <nav className="mx-auto flex w-full max-w-3xl items-center gap-6 px-6 py-3 text-sm">
             <Link href="/" className="font-semibold">
-              🧾 Expense Agent
+              📡 Rupee Radar
             </Link>
             <Link
               href="/upload"
