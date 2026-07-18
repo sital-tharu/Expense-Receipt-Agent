@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
+import ChatWidget from "@/components/ChatWidget";
 import GmailSync from "@/components/GmailSync";
 import OwnerKeyDialog from "@/components/OwnerKeyDialog";
 import { isGmailConnected } from "@/lib/gmail-auth";
@@ -59,6 +60,7 @@ export default async function RootLayout({
           </nav>
         </header>
         {children}
+        <ChatWidget />
         <OwnerKeyDialog />
       </body>
     </html>
