@@ -92,8 +92,10 @@ recurring subscriptions before they quietly drain your account.
    - `FIREBASE_SERVICE_ACCOUNT_JSON` — the **entire** `serviceAccount.json`
      pasted as one value (used instead of the file path)
    - `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`
-   - `GMAIL_ROUTES_SECRET` — any passcode; required to connect/sync Gmail on
-     the public URL (the dashboard itself stays open)
+   - `GMAIL_ROUTES_SECRET` — any passcode; on the public URL it becomes the
+     **owner passcode**: required to connect/sync Gmail, save uploads to the
+     dashboard, and delete receipts. Visitors still get the read-only
+     dashboard and a try-it upload (extraction shown, nothing stored).
    - `EXCHANGE_RATE_USD` (and any other rates you use)
 3. In the Google Cloud console → your OAuth client → add a second authorized
    redirect URI: `https://<your-app>.vercel.app/api/gmail/callback`.

@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { consentUrl, isGmailKeyValid } from "@/lib/gmail-auth";
+import { consentUrl } from "@/lib/gmail-auth";
+import { isOwnerKeyValid } from "@/lib/owner";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  if (!isGmailKeyValid(url.searchParams.get("key"))) {
+  if (!isOwnerKeyValid(url.searchParams.get("key"))) {
     return NextResponse.json(
-      { error: "Invalid or missing Gmail passcode", needsKey: true },
+      { error: "Invalid or missing owner passcode", needsKey: true },
       { status: 403 },
     );
   }

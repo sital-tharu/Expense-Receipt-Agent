@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { getStoredOwnerKey, obtainOwnerKey } from "@/lib/owner-key";
 import { formatInr } from "@/lib/stats";
 import type { Receipt } from "@/lib/types";
 
@@ -11,6 +12,7 @@ export default function UploadPage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>("idle");
   const [receipt, setReceipt] = useState<Receipt | null>(null);
+  const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -23,8 +25,7 @@ export default function UploadPage() {
     setPreviewUrl(selected ? URL.createObjectURL(selected) : null);
   }
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function runExtract() {
     if (!file) return;
 
     setStatus("extracting");
@@ -33,15 +34,31 @@ export default function UploadPage() {
     body.append("image", file);
 
     try {
-      const res = await fetch("/api/extract", { method: "POST", body });
+      const key = getStoredOwnerKey();
+      const res = await fetch("/api/extract", {
+        method: "POST",
+        body,
+        headers: key ? { "x-owner-key": key } : undefined,
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? `Request failed (${res.status})`);
       setReceipt(data.receipt);
+      setSaved(data.saved !== false);
       setStatus("done");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setStatus("error");
     }
+  }
+
+  function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    void runExtract();
+  }
+
+  // Visitor tried it, owner wants it kept: take the passcode, redo with save
+  function unlockAndSave() {
+    if (obtainOwnerKey(true)) void runExtract();
   }
 
   return (
@@ -74,7 +91,7 @@ export default function UploadPage() {
           disabled={!file || status === "extracting"}
           className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {status === "extracting" ? "Extracting…" : "Extract & save"}
+          {status === "extracting" ? "Extracting…" : "Extract & categorize"}
         </button>
       </form>
 
@@ -87,7 +104,12 @@ export default function UploadPage() {
       {status === "done" && receipt && (
         <div className="mt-6 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
           <h2 className="font-medium">
-            Saved ✓
+            {saved ? "Saved ✓" : "Extracted ✓"}
+            {!saved && (
+              <span className="ml-2 rounded bg-sky-100 px-1.5 py-0.5 text-[11px] font-normal text-sky-800 dark:bg-sky-950 dark:text-sky-300">
+                Try-it mode — not saved to the dashboard
+              </span>
+            )}
             {receipt.confidence === "low" && (
               <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-normal text-amber-800 dark:bg-amber-950 dark:text-amber-300">
                 Needs review — check the fields below
@@ -124,6 +146,18 @@ export default function UploadPage() {
                 ))}
               </tbody>
             </table>
+          )}
+          {!saved && (
+            <p className="mt-3 text-xs text-gray-500">
+              This public demo extracts your image but doesn&apos;t store it.{" "}
+              <button
+                type="button"
+                onClick={unlockAndSave}
+                className="text-emerald-600 underline hover:text-emerald-500"
+              >
+                Owner? Enter passcode to save
+              </button>
+            </p>
           )}
           <details className="mt-3">
             <summary className="cursor-pointer text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">

@@ -92,6 +92,11 @@ export async function syncGmail(): Promise<SyncResult | { needsAuth: true }> {
   for (const { id } of messages) {
     const seen = await db.collection(PROCESSED_COLLECTION).doc(id).get();
     if (seen.exists) {
+      // Receipts the owner deleted in-app stay deleted — never reimport.
+      if (seen.data()?.deleted) {
+        result.skipped++;
+        continue;
+      }
       // Only skip while the imported receipt still exists — if the user
       // deleted it (e.g. in the Firebase console), clear the stale marker
       // and reimport the email.

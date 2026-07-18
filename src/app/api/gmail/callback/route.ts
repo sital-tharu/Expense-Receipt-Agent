@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { exchangeCode, isGmailKeyValid } from "@/lib/gmail-auth";
+import { exchangeCode } from "@/lib/gmail-auth";
+import { isOwnerKeyValid } from "@/lib/owner";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -8,7 +9,7 @@ export async function GET(request: Request) {
 
   // When GMAIL_ROUTES_SECRET is set, the consent URL carries it as `state`;
   // reject callbacks that didn't originate from our gated auth route.
-  if (!isGmailKeyValid(url.searchParams.get("state"))) {
+  if (!isOwnerKeyValid(url.searchParams.get("state"))) {
     return NextResponse.redirect(
       new URL("/?gmail=error&reason=bad_state", url.origin),
     );

@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 import GmailSync from "@/components/GmailSync";
-import { isGmailConnected, isGmailProtected } from "@/lib/gmail-auth";
+import { isGmailConnected } from "@/lib/gmail-auth";
+import { isOwnerProtected } from "@/lib/owner";
 import "./globals.css";
 
 // The header's Gmail-connected state comes from Firestore — render all
@@ -51,7 +52,7 @@ export default async function RootLayout({
             <span className="ml-auto">
               <GmailSync
                 connected={gmailConnected}
-                protectionEnabled={isGmailProtected()}
+                protectionEnabled={isOwnerProtected()}
               />
             </span>
           </nav>
