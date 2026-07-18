@@ -24,8 +24,8 @@ export default function GmailSync({
   const buttonClasses =
     "inline-flex items-center gap-1.5 rounded-md border border-emerald-600/40 px-3 py-1.5 text-[13px] font-medium text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 disabled:opacity-50";
 
-  function connect() {
-    const key = protectionEnabled ? obtainOwnerKey() : null;
+  async function connect() {
+    const key = protectionEnabled ? await obtainOwnerKey() : null;
     if (protectionEnabled && !key) return;
     window.location.href = key
       ? `/api/gmail/auth?key=${encodeURIComponent(key)}`
@@ -36,7 +36,7 @@ export default function GmailSync({
     setSyncing(true);
     setMessage(null);
     try {
-      const key = protectionEnabled ? obtainOwnerKey(retrying) : null;
+      const key = protectionEnabled ? await obtainOwnerKey(retrying) : null;
       if (protectionEnabled && !key) return;
       const res = await fetch("/api/gmail/sync", {
         method: "POST",
