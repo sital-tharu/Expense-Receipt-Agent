@@ -8,11 +8,17 @@
  * routes. This module is the seam for real accounts later: swap these
  * checks for a per-user session and the call sites stay unchanged.
  */
+
+// Pasted codes carry stray spaces and invisible characters (zero-width
+// spaces, BOM, direction marks) from chat apps — strip both before comparing.
+function normalizeKey(s: string): string {
+  return s.replace(/[\u200B-\u200F\u2060\uFEFF]/g, "").trim();
+}
+
 export function isOwnerKeyValid(provided: string | null | undefined): boolean {
   const secret = process.env.GMAIL_ROUTES_SECRET;
   if (!secret) return true;
-  // Mobile keyboards/clipboards often append a stray space to pasted codes.
-  return provided?.trim() === secret;
+  return provided != null && normalizeKey(provided) === secret.trim();
 }
 
 export function isOwnerProtected(): boolean {

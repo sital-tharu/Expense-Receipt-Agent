@@ -37,7 +37,9 @@ export default function OwnerKeyDialog() {
         onClick={(e) => e.stopPropagation()}
         onSubmit={(e) => {
           e.preventDefault();
-          close(value.trim() || null);
+          // strip invisible chars that ride along when pasting from chat apps
+          // (they'd also make fetch reject the header value)
+          close(value.replace(/[\u200B-\u200F\u2060\uFEFF]/g, "").trim() || null);
         }}
         className="w-full max-w-xs rounded-xl border border-gray-200 bg-white p-4 shadow-xl dark:border-gray-700 dark:bg-gray-950"
       >
