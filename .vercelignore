@@ -1,0 +1,9 @@
+
+# Belt-and-braces on top of .gitignore: keys and personal receipt
+# screenshots must never be uploaded with a CLI deploy.
+secrets
+samples
+.env*
+!.env.example
+node_modules
+.next
