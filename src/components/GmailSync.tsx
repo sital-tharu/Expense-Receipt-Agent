@@ -16,9 +16,10 @@ function obtainKey(forceAsk = false): string | null {
   if (typeof window === "undefined") return null;
   let key = window.localStorage.getItem(KEY_STORAGE);
   if (!key || forceAsk) {
-    key = window.prompt(
-      "Gmail passcode (the GMAIL_ROUTES_SECRET you configured):",
-    );
+    key =
+      window
+        .prompt("Gmail passcode (the GMAIL_ROUTES_SECRET you configured):")
+        ?.trim() || null;
     if (key) window.localStorage.setItem(KEY_STORAGE, key);
   }
   return key;

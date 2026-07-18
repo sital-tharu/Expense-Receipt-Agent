@@ -29,7 +29,8 @@ function clientCreds(): { clientId: string; clientSecret: string } {
 export function isGmailKeyValid(provided: string | null | undefined): boolean {
   const secret = process.env.GMAIL_ROUTES_SECRET;
   if (!secret) return true;
-  return provided === secret;
+  // Mobile keyboards/clipboards often append a stray space to pasted codes.
+  return provided?.trim() === secret;
 }
 
 export function isGmailProtected(): boolean {
