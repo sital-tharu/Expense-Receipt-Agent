@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { getStoredOwnerKey } from "@/lib/owner-key";
 
 interface Message {
   role: "user" | "agent";
@@ -33,9 +34,14 @@ export default function ChatWidget() {
     setBusy(true);
     setMessages((m) => [...m, { role: "user", text: q }]);
     try {
+      // the owner's questions are exempt from the public demo's daily cap
+      const key = getStoredOwnerKey();
       const res = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(key ? { "x-owner-key": key } : {}),
+        },
         body: JSON.stringify({ question: q }),
       });
       const data = await res.json();
