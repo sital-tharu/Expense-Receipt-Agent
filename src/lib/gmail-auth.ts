@@ -22,21 +22,6 @@ function clientCreds(): { clientId: string; clientSecret: string } {
   return { clientId, clientSecret };
 }
 
-/**
- * Optional shared passcode gating the Gmail routes on public deployments.
- * Unset (local dev) → routes are open. Set GMAIL_ROUTES_SECRET on Vercel.
- */
-export function isGmailKeyValid(provided: string | null | undefined): boolean {
-  const secret = process.env.GMAIL_ROUTES_SECRET;
-  if (!secret) return true;
-  // Mobile keyboards/clipboards often append a stray space to pasted codes.
-  return provided?.trim() === secret;
-}
-
-export function isGmailProtected(): boolean {
-  return Boolean(process.env.GMAIL_ROUTES_SECRET);
-}
-
 async function readStoredToken(): Promise<string | null> {
   const doc = await getDb()
     .collection(TOKEN_DOC.collection)
