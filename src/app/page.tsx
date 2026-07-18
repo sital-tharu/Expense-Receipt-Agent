@@ -304,8 +304,8 @@ export default async function DashboardPage({
             )}
           </p>
         ) : (
-          <div className="mt-3 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
-            <table className="w-full text-[13px]">
+          <div className="mt-3 overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
+            <table className="w-full min-w-[540px] text-[13px]">
               <thead>
                 <tr className="bg-gray-50 text-left text-xs text-gray-500 dark:bg-gray-900/60">
                   <th className="px-3.5 py-2 font-medium">Merchant</th>
