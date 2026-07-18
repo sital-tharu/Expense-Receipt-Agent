@@ -71,8 +71,8 @@ export default function UploadPage() {
   }
 
   // Visitor tried it, owner wants it kept: take the passcode, redo with save
-  function unlockAndSave() {
-    if (obtainOwnerKey(true)) void runExtract();
+  async function unlockAndSave() {
+    if (await obtainOwnerKey(true)) void runExtract();
   }
 
   return (
@@ -92,6 +92,14 @@ export default function UploadPage() {
           className="block w-full text-sm file:mr-4 file:rounded-md file:border-0 file:bg-gray-900 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-gray-700 dark:file:bg-gray-100 dark:file:text-gray-900"
         />
 
+        <button
+          type="submit"
+          disabled={!file || status === "extracting"}
+          className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {status === "extracting" ? "Extracting…" : "Extract & categorize"}
+        </button>
+
         {previewUrl && (
           // eslint-disable-next-line @next/next/no-img-element -- local blob preview, next/image not applicable
           <img
@@ -100,14 +108,6 @@ export default function UploadPage() {
             className="max-h-80 rounded-lg border border-gray-200 dark:border-gray-700"
           />
         )}
-
-        <button
-          type="submit"
-          disabled={!file || status === "extracting"}
-          className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {status === "extracting" ? "Extracting…" : "Extract & categorize"}
-        </button>
       </form>
       )}
 

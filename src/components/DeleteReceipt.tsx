@@ -35,7 +35,7 @@ export default function DeleteReceipt({
     if (!retrying && !window.confirm(`Delete the ${merchant} receipt?`)) return;
     setBusy(true);
     try {
-      const key = protectionEnabled ? obtainOwnerKey(retrying) : null;
+      const key = protectionEnabled ? await obtainOwnerKey(retrying) : null;
       if (protectionEnabled && !key) return;
       const res = await fetch(`/api/receipts/${id}`, {
         method: "DELETE",
