@@ -44,11 +44,37 @@ export default function ChatWidget() {
         },
         body: JSON.stringify({ question: q }),
       });
-      const data = await res.json();
-      const text = res.ok
-        ? (data.answer as string)
-        : (data.error ?? "Something went wrong — try again.");
-      setMessages((m) => [...m, { role: "agent", text }]);
+      if (!res.ok || !res.body) {
+        const data = await res.json().catch(() => null);
+        setMessages((m) => [
+          ...m,
+          { role: "agent", text: data?.error ?? "Something went wrong — try again." },
+        ]);
+        return;
+      }
+      // stream the answer into a bubble as Gemini generates it
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let acc = "";
+      let appended = false;
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        acc += decoder.decode(value, { stream: true });
+        const text = acc;
+        setMessages((m) =>
+          appended
+            ? [...m.slice(0, -1), { role: "agent", text }]
+            : [...m, { role: "agent", text }],
+        );
+        appended = true;
+      }
+      if (!acc.trim()) {
+        setMessages((m) => [
+          ...m,
+          { role: "agent", text: "The agent went quiet — please try again." },
+        ]);
+      }
     } catch {
       setMessages((m) => [
         ...m,
@@ -119,7 +145,7 @@ export default function ChatWidget() {
             {m.text}
           </div>
         ))}
-        {busy && (
+        {busy && messages[messages.length - 1]?.role === "user" && (
           <p className="mr-8 animate-pulse rounded-xl rounded-bl-sm bg-gray-100 px-3 py-2 text-[13px] text-gray-500 dark:bg-gray-800">
             Reading your receipts…
           </p>
