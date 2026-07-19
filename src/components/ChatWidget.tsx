@@ -52,22 +52,22 @@ export default function ChatWidget() {
         ]);
         return;
       }
-      // stream the answer into a bubble as Gemini generates it
+      // stream the answer into a bubble as Gemini generates it. The
+      // append-vs-replace decision must come from the state itself: React
+      // runs updaters lazily, so outside flags are stale by the time they run.
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let acc = "";
-      let appended = false;
       for (;;) {
         const { done, value } = await reader.read();
         if (done) break;
         acc += decoder.decode(value, { stream: true });
         const text = acc;
-        setMessages((m) =>
-          appended
-            ? [...m.slice(0, -1), { role: "agent", text }]
-            : [...m, { role: "agent", text }],
-        );
-        appended = true;
+        setMessages((m) => {
+          const last = m[m.length - 1];
+          const rest = last?.role === "agent" ? m.slice(0, -1) : m;
+          return [...rest, { role: "agent", text }];
+        });
       }
       if (!acc.trim()) {
         setMessages((m) => [
