@@ -52,24 +52,45 @@ export default function ChatWidget() {
         ]);
         return;
       }
-      // stream the answer into a bubble as Gemini generates it. The
-      // append-vs-replace decision must come from the state itself: React
-      // runs updaters lazily, so outside flags are stale by the time they run.
+      // Gemini streams the whole answer in a few large chunks within ~0.5s —
+      // too fast to look alive. Buffer the stream and reveal it as a
+      // typewriter that smoothly catches up to whatever has arrived.
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
-      let acc = "";
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        acc += decoder.decode(value, { stream: true });
-        const text = acc;
-        setMessages((m) => {
-          const last = m[m.length - 1];
-          const rest = last?.role === "agent" ? m.slice(0, -1) : m;
-          return [...rest, { role: "agent", text }];
-        });
+      let target = "";
+      let readingDone = false;
+      const pump = (async () => {
+        try {
+          for (;;) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            target += decoder.decode(value, { stream: true });
+          }
+        } finally {
+          readingDone = true;
+        }
+      })();
+
+      let shown = 0;
+      while (!(readingDone && shown >= target.length)) {
+        await new Promise((r) => setTimeout(r, 24));
+        if (shown < target.length) {
+          shown = Math.min(
+            target.length,
+            shown + Math.max(1, Math.ceil((target.length - shown) / 25)),
+          );
+          const text = target.slice(0, shown);
+          // append-vs-replace must be decided from the state itself: React
+          // runs updaters lazily, so outside flags are stale by then.
+          setMessages((m) => {
+            const last = m[m.length - 1];
+            const rest = last?.role === "agent" ? m.slice(0, -1) : m;
+            return [...rest, { role: "agent", text }];
+          });
+        }
       }
-      if (!acc.trim()) {
+      await pump;
+      if (!target.trim()) {
         setMessages((m) => [
           ...m,
           { role: "agent", text: "The agent went quiet — please try again." },
