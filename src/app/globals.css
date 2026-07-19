@@ -45,3 +45,10 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* chat button radar animation (see ChatWidget) */
+@keyframes radar-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

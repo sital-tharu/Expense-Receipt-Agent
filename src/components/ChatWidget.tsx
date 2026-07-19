@@ -107,14 +107,41 @@ export default function ChatWidget() {
   }
 
   if (!open) {
+    // "Ask AI" pill: mini live radar scope + label (design E2) — the text
+    // makes the chatbot unmissable for first-time visitors
     return (
       <button
         onClick={() => setOpen(true)}
         aria-label="Ask about your spending"
         title="Ask about your spending"
-        className="fixed bottom-5 right-5 z-40 flex h-13 w-13 items-center justify-center rounded-full bg-emerald-600 text-2xl text-white shadow-lg hover:bg-emerald-500"
+        className="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full py-2.5 pl-2.5 pr-4 text-sm font-semibold text-white transition-transform hover:scale-105"
+        style={{
+          background: "linear-gradient(135deg,#10b981,#047857)",
+          boxShadow: "0 6px 18px rgba(4,120,87,.4)",
+        }}
       >
-        💬
+        <span
+          aria-hidden
+          className="relative block h-[30px] w-[30px] overflow-hidden rounded-full border border-white/70"
+          style={{
+            background: "radial-gradient(circle at 50% 40%, #065f46, #064e3b 70%)",
+          }}
+        >
+          <svg viewBox="0 0 34 34" className="absolute inset-0">
+            <circle cx="17" cy="17" r="13" fill="none" stroke="#6ee7b7" strokeWidth="1.2" opacity=".8" />
+            <circle cx="17" cy="17" r="7" fill="none" stroke="#6ee7b7" strokeWidth="1" opacity=".45" />
+            <circle cx="17" cy="17" r="1.6" fill="#6ee7b7" />
+          </svg>
+          <span
+            className="absolute inset-0 rounded-full"
+            style={{
+              background:
+                "conic-gradient(from 0deg, rgba(110,231,183,.8), rgba(110,231,183,.15) 60deg, transparent 80deg)",
+              animation: "radar-spin 3s linear infinite",
+            }}
+          />
+        </span>
+        Ask AI
       </button>
     );
   }

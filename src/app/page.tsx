@@ -15,7 +15,7 @@ import {
 } from "@/lib/stats";
 import { detectSubscriptions, monthlyTotal } from "@/lib/subscriptions";
 import { CATEGORIES, type Category, type StoredReceipt } from "@/lib/types";
-import { categoryColorVar, dashboardHref } from "@/lib/urls";
+import { categoryColorVar, dashboardHref, merchantColor } from "@/lib/urls";
 
 // Firestore data changes between requests — never prerender this page
 export const dynamic = "force-dynamic";
@@ -224,8 +224,12 @@ export default async function DashboardPage({
                 className="flex items-center justify-between rounded-lg bg-gray-50 px-3.5 py-2.5 dark:bg-gray-900/60"
               >
                 <div className="flex items-center gap-2.5">
-                  <span aria-hidden className="text-gray-400">
-                    🔁
+                  <span
+                    aria-hidden
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[15px] font-bold text-white"
+                    style={{ background: merchantColor(s.merchant) }}
+                  >
+                    {s.merchant.trim().charAt(0).toUpperCase()}
                   </span>
                   <div>
                     <p className="text-sm font-medium">{s.merchant}</p>

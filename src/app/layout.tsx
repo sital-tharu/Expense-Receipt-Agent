@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import ChatWidget from "@/components/ChatWidget";
 import GmailSync from "@/components/GmailSync";
 import OwnerKeyDialog from "@/components/OwnerKeyDialog";
+import RadarLogo from "@/components/RadarLogo";
 import { isGmailConnected } from "@/lib/gmail-auth";
 import { isOwnerProtected } from "@/lib/owner";
 import "./globals.css";
@@ -42,8 +43,9 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col">
         <header className="border-b border-gray-200 dark:border-gray-800">
           <nav className="mx-auto flex w-full max-w-3xl items-center gap-6 px-6 py-3 text-sm">
-            <Link href="/" className="font-semibold">
-              📡 Rupee Radar
+            <Link href="/" className="flex items-center gap-2 font-semibold">
+              <RadarLogo className="h-[22px] w-[22px] text-emerald-600 dark:text-emerald-400" />
+              Rupee Radar
             </Link>
             <Link
               href="/upload"
