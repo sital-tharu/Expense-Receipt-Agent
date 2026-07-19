@@ -54,6 +54,9 @@ export default async function DashboardPage({
     ? (catRaw as Category)
     : undefined;
 
+  const gmailStatus = Array.isArray(sp.gmail) ? sp.gmail[0] : sp.gmail;
+  const gmailReason = Array.isArray(sp.reason) ? sp.reason[0] : sp.reason;
+
   const anchor = resolveWeekAnchor(weekRaw);
   const weekStart = isoDate(anchor);
   const isCurrentWeek = weekStart === isoDate(mondayOf(new Date()));
@@ -89,6 +92,30 @@ export default async function DashboardPage({
 
   return (
     <main className="mx-auto w-full max-w-3xl px-6 py-10">
+      {/* Post-OAuth feedback from /api/gmail/callback redirects */}
+      {gmailStatus === "connected" && (
+        <div className="mb-6 flex items-center justify-between gap-3 rounded-lg bg-emerald-50 px-3.5 py-2.5 text-sm text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+          <span>
+            ✅ Gmail connected — hit <strong>Sync inbox</strong> to import your
+            receipt emails.
+          </span>
+          <Link href="/" className="text-xs underline">
+            dismiss
+          </Link>
+        </div>
+      )}
+      {gmailStatus === "error" && (
+        <div className="mb-6 flex items-center justify-between gap-3 rounded-lg bg-red-50 px-3.5 py-2.5 text-sm text-red-800 dark:bg-red-950/60 dark:text-red-300">
+          <span>
+            Gmail connection failed
+            {gmailReason ? ` (${gmailReason})` : ""} — please try again.
+          </span>
+          <Link href="/" className="text-xs underline">
+            dismiss
+          </Link>
+        </div>
+      )}
+
       {/* Header: week navigator + subscriptions total */}
       <div className="flex items-end justify-between">
         <div>
@@ -145,7 +172,9 @@ export default async function DashboardPage({
       {/* Stat tiles */}
       <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-[1.3fr_1fr]">
         <div className="rounded-xl bg-gray-50 p-4 dark:bg-gray-900/60">
-          <p className="text-[13px] text-gray-500">Total spend · this week</p>
+          <p className="text-[13px] text-gray-500">
+            Total spend{isCurrentWeek && " · this week"}
+          </p>
           <p className="mt-1 font-mono text-3xl font-medium tracking-tight">
             {formatInr(stats.total)}
           </p>
@@ -251,7 +280,7 @@ export default async function DashboardPage({
       {/* Spend by category */}
       <section className="mt-6">
         <h2 className="text-[13px] text-gray-500">
-          Spend by category · this week
+          Spend by category{isCurrentWeek && " · this week"}
         </h2>
         <div className="mt-3">
           <CategoryBars
@@ -266,7 +295,9 @@ export default async function DashboardPage({
       <section className="mt-8">
         <div className="flex items-baseline justify-between">
           <div className="flex items-baseline gap-2">
-            <h2 className="text-[13px] text-gray-500">Receipts this week</h2>
+            <h2 className="text-[13px] text-gray-500">
+              Receipts{isCurrentWeek && " this week"}
+            </h2>
             {activeCat && (
               <Link
                 href={dashboardHref({ week: weekParam })}
@@ -329,12 +360,12 @@ export default async function DashboardPage({
                     <td className="px-3.5 py-2.5" title={r.emailSubject}>
                       {r.merchant}
                       {r.confidence === "low" && (
-                        <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                        <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] whitespace-nowrap text-amber-800 dark:bg-amber-950 dark:text-amber-300">
                           Needs review
                         </span>
                       )}
                     </td>
-                    <td className="px-3.5 py-2.5 text-gray-500">
+                    <td className="px-3.5 py-2.5 whitespace-nowrap text-gray-500">
                       {formatShortDate(r.date)}
                     </td>
                     <td className="px-3.5 py-2.5">
