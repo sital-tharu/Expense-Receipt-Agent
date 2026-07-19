@@ -16,3 +16,12 @@ export function dashboardHref(params: {
 export function categoryColorVar(category: string): string {
   return `var(--cat-${category.toLowerCase()})`;
 }
+
+/** Deterministic avatar color for a merchant — same name, same hue. */
+export function merchantColor(name: string): string {
+  let hash = 0;
+  for (const ch of name.trim().toLowerCase()) {
+    hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+  }
+  return `hsl(${hash % 360} 55% 42%)`;
+}
