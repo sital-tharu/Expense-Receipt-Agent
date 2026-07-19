@@ -156,7 +156,7 @@ Gmail "receipts" label ──┘                                                
 | Command | What it does |
 |---|---|
 | `npm run test:extract -- samples/<image>` | Extract a receipt image from the CLI and save it to Firestore (`--dry-run` to skip the write) |
-| `npm run seed` | Seed mock receipt history for the demo (`-- --wipe` clears previously seeded docs first) |
+| `npm run seed` | Seed a rich mock receipt history for the demo — subscription streaks, a scripted anomaly, currency + low-confidence showcases (`-- --wipe` clears previously seeded docs first; `-- --wipe-real` backs up real receipts to `secrets/` and removes them for a clean public demo) |
 | `npm run test:logic` | Regression checks for subscription detection & weekly stats (no credentials needed) |
 
 ## Roadmap
