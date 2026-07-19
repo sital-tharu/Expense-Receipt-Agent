@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { askAgent, MAX_QUESTION_CHARS } from "@/lib/chat";
+import { askAgentStream, MAX_QUESTION_CHARS } from "@/lib/chat";
 import { isOwnerKeyValid } from "@/lib/owner";
 import { consumeQuota, QUOTA_MESSAGE } from "@/lib/quota";
 
@@ -29,8 +29,30 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: QUOTA_MESSAGE }, { status: 429 });
       }
     }
-    const answer = await askAgent(question.trim());
-    return NextResponse.json({ answer });
+    const stream = await askAgentStream(question.trim());
+    const encoder = new TextEncoder();
+    const body = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of stream) {
+            if (chunk.text) controller.enqueue(encoder.encode(chunk.text));
+          }
+        } catch (err) {
+          // headers are already sent — append the failure as text
+          console.error("Chat stream failed mid-answer:", err);
+          controller.enqueue(
+            encoder.encode(" [The agent hit an error — please try again.]"),
+          );
+        }
+        controller.close();
+      },
+    });
+    return new Response(body, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-store",
+      },
+    });
   } catch (err) {
     console.error("Chat failed:", err);
     return NextResponse.json(

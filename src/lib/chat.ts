@@ -47,11 +47,15 @@ Answer the user's question using ONLY the receipt data provided. Rules:
 - Politely refuse anything unrelated to this spending data.`;
 }
 
-/** One-shot grounded Q&A over all stored receipts — no conversation state. */
-export async function askAgent(question: string): Promise<string> {
+/**
+ * One-shot grounded Q&A over all stored receipts — no conversation state.
+ * Streams the answer so the UI can render text as it generates; failures
+ * before the first chunk (Firestore, Gemini) throw before any bytes ship.
+ */
+export async function askAgentStream(question: string) {
   const receipts = await getReceipts();
   const ai = getGeminiClient();
-  const response = await ai.models.generateContent({
+  return ai.models.generateContentStream({
     model: GEMINI_MODEL,
     contents: [
       {
@@ -65,7 +69,4 @@ export async function askAgent(question: string): Promise<string> {
     ],
     config: { temperature: 0.2 },
   });
-  const text = response.text?.trim();
-  if (!text) throw new Error("Gemini returned an empty answer");
-  return text;
 }
