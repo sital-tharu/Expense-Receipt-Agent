@@ -23,10 +23,23 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const DESCRIPTION =
+  "Catches every receipt, flags every subscription — an AI agent that turns scattered receipts into a weekly spending dashboard you can talk to.";
+
 export const metadata: Metadata = {
   title: "Rupee Radar",
-  description:
-    "Catches every receipt, flags every subscription — an AI agent that turns scattered receipts into a weekly spending dashboard you can talk to.",
+  description: DESCRIPTION,
+  openGraph: {
+    title: "Rupee Radar",
+    description: DESCRIPTION,
+    siteName: "Rupee Radar",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Rupee Radar",
+    description: DESCRIPTION,
+  },
 };
 
 export default async function RootLayout({
@@ -62,6 +75,17 @@ export default async function RootLayout({
           </nav>
         </header>
         {children}
+        <footer className="mt-auto border-t border-gray-200 py-4 text-center text-xs text-gray-500 dark:border-gray-800">
+          📡 Rupee Radar — an AI expense agent built with Gemini ·{" "}
+          <a
+            href="https://github.com/sital-tharu/Expense-Receipt-Agent"
+            target="_blank"
+            rel="noopener"
+            className="text-emerald-600 hover:underline"
+          >
+            GitHub
+          </a>
+        </footer>
         <ChatWidget />
         <OwnerKeyDialog />
       </body>
