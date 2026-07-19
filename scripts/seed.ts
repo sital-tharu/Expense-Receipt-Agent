@@ -148,7 +148,9 @@ async function wipeRealReceipts() {
       image: image.exists ? image.data() : null,
     });
   }
-  const path = `secrets/backup-real-receipts-${isoDate(new Date())}.json`;
+  // timestamped so repeated wipes on the same day never overwrite a backup
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const path = `secrets/backup-real-receipts-${stamp}.json`;
   writeFileSync(path, JSON.stringify(backup, null, 2));
   console.log(`Backed up ${real.length} real receipts to ${path}`);
 
