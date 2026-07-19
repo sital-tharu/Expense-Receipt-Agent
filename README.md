@@ -13,6 +13,11 @@ questions about where your money went.
 > 🏆 Built solo for the **AI Agent Builder Series 2026 — Grand Finale
 > Hackathon** (AI House × Google for Developers, Bengaluru)
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/dashboard-dark.png">
+  <img src="docs/screenshots/dashboard-light.png" alt="Rupee Radar dashboard — weekly total with a 5.8× Shopping anomaly flagged, five recurring subscriptions detected, color-coded category bars and the week's receipts">
+</picture>
+
 ## Try it in 30 seconds
 
 No login needed:
@@ -25,6 +30,13 @@ No login needed:
 3. **[Upload](https://expense-receipt-agent.vercel.app/upload) any receipt or
    GPay screenshot** — watch Gemini extract and categorize it live. Try-it
    mode: your image is processed but never stored.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/chat-dark.png">
+    <img width="440" src="docs/screenshots/chat-light.png" alt="The chat agent answering a subscriptions question, grounded in the receipts on the dashboard">
+  </picture>
+</p>
 
 ## What it does
 
