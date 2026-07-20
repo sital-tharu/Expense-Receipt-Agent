@@ -8,7 +8,8 @@ reads every receipt into structured data, categorizes it, watches for
 recurring subscriptions and spending anomalies, and answers plain-language
 questions about where your money went.
 
-**🔗 Live demo: [expense-receipt-agent.vercel.app](https://expense-receipt-agent.vercel.app)**
+**🔗 Live demo: [expense-receipt-agent.vercel.app](https://expense-receipt-agent.vercel.app)** ·
+**🎥 [Demo video](https://youtu.be/241sdvWMpL8)**
 
 > 🏆 Built solo for the **AI Agent Builder Series 2026 — Grand Finale
 > Hackathon** (AI House × Google for Developers, Bengaluru)
